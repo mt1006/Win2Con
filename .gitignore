@@ -1,0 +1,12 @@
+.vs/
+.vscode/
+Release/
+Debug/
+x64/
+
+Win2Con/test/
+packed/
+/test.bat
+/charset.txt
+
+/w2c
