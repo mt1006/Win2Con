@@ -130,7 +130,7 @@ static int opInput(int argc, char** argv)
 {
 	const int INPUT_NUM_BASE = 16;
 	if (argc < 1) { invalidSyntax(__LINE__); }
-	inputWindow = (HWND)strtoll(argv, NULL, INPUT_NUM_BASE);
+	inputWindow = (HWND)strtoll(argv[0], NULL, INPUT_NUM_BASE);
 	return 1;
 }
 

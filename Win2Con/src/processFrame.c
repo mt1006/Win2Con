@@ -39,6 +39,8 @@ void processFrame(Frame* frame)
 
 	uint8_t* output = (uint8_t*)frame->output;
 	frame->outputLineOffsets[0] = 0;
+
+	int wndI = wndH - 1;
 	for (int i = 0; i < imgH; i++)
 	{
 		uint8_t oldColor = -1;
@@ -49,9 +51,16 @@ void processFrame(Frame* frame)
 
 		for (int j = 0; j < imgW; j++)
 		{
-			uint8_t valR = frame->bitmapArray[((i * imgW) + j) * 4];
-			uint8_t valG = frame->bitmapArray[((i * imgW) + j) * 4 + 1];
-			uint8_t valB = frame->bitmapArray[((i * imgW) + j) * 4 + 2];
+			if (j >= wndW || i >= wndH)
+			{
+				output[offset] = ' ';
+				offset++;
+				continue;
+			}
+
+			uint8_t valR = frame->bitmapArray[((wndI * wndW) + j) * 4 + 2];
+			uint8_t valG = frame->bitmapArray[((wndI * wndW) + j) * 4 + 1];
+			uint8_t valB = frame->bitmapArray[((wndI * wndW) + j) * 4];
 
 			uint8_t val, color;
 
@@ -157,6 +166,8 @@ void processFrame(Frame* frame)
 
 		output[offset] = '\n';
 		frame->outputLineOffsets[i + 1] = offset + 1;
+
+		wndI--;
 	}
 
 	if (!disableCLS)
@@ -171,13 +182,21 @@ static void processForWinAPI(Frame* frame)
 	#ifdef _WIN32
 	CHAR_INFO* output = (CHAR_INFO*)frame->output;
 
+	int wndI = wndH - 1;
 	for (int i = 0; i < imgH; i++)
 	{
 		for (int j = 0; j < imgW; j++)
 		{
-			uint8_t valR = frame->bitmapArray[((i * imgW) + j) * 4];
-			uint8_t valG = frame->bitmapArray[((i * imgW) + j) * 4 + 1];
-			uint8_t valB = frame->bitmapArray[((i * imgW) + j) * 4 + 2];
+			if (j >= wndW || i >= wndH)
+			{
+				output[(i * imgW) + j].Char.AsciiChar = ' ';
+				output[(i * imgW) + j].Attributes = 0;
+				continue;
+			}
+
+			uint8_t valR = frame->bitmapArray[((wndI * wndW) + j) * 4 + 2];
+			uint8_t valG = frame->bitmapArray[((wndI * wndW) + j) * 4 + 1];
+			uint8_t valB = frame->bitmapArray[((wndI * wndW) + j) * 4];
 
 			uint8_t val;
 
@@ -194,6 +213,8 @@ static void processForWinAPI(Frame* frame)
 
 			output[(i * imgW) + j].Char.AsciiChar = charset[(val * charsetSize) / 256];
 		}
+
+		wndI--;
 	}
 	#endif
 }
