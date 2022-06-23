@@ -19,10 +19,20 @@ void initGetFrame(HWND inputWindow)
 void refreshWinSize(void)
 {
 	RECT wndRect;
-	GetClientRect(hwnd, &wndRect);
+	int newWndW, newWndH;
 
-	int newWndW = wndRect.right;
-	int newWndH = wndRect.bottom;
+	if (pwClientArea)
+	{
+		GetClientRect(hwnd, &wndRect);
+		newWndW = wndRect.right;
+		newWndH = wndRect.bottom;
+	}
+	else
+	{
+		GetWindowRect(hwnd, &wndRect);
+		newWndW = wndRect.right - wndRect.left;
+		newWndH = wndRect.bottom - wndRect.top;
+	}
 
 	if (wndW != newWndW || wndH != newWndH)
 	{

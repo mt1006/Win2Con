@@ -22,6 +22,7 @@ void init(HWND inputWindow)
 	initConInput();
 	if (!inputWindow)
 	{
+		setDefaultColor();
 		inputWindow = getWindow();
 		if (!inputWindow) { return; }
 	}

@@ -33,6 +33,7 @@
 #endif
 
 #pragma warning(disable : 4996)
+#pragma comment(lib, "dwmapi")
 
 #if defined(__x86_64__) || defined(_M_AMD64)
 #define W2C_CPU "AMD64"
