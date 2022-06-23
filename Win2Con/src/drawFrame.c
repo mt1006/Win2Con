@@ -7,6 +7,7 @@ typedef struct
 	double fontRatio;
 } ConsoleInfo;
 
+static HWND conHWND = NULL;
 static HANDLE outputHandle = NULL;
 
 static void drawWithWinAPI(Frame* frame);
@@ -15,6 +16,7 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo);
 void initDrawFrame(void)
 {
 	#ifdef _WIN32
+	conHWND = GetConsoleWindow();
 	outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
 	if (colorMode == CM_CSTD_16 ||
@@ -51,67 +53,20 @@ void refreshConSize(void)
 			argH = consoleInfo.conH;
 		}
 
-		if (fillArea)
+		if (firstCall)
 		{
-			if (firstCall)
-			{
-				newW = argW;
-				newH = argH;
-			}
-		}
-		else if (fontRatio != consoleInfo.fontRatio)
-		{
-			if (constFontRatio == 0.0) { fontRatio = consoleInfo.fontRatio; }
-			else { fontRatio = constFontRatio; }
-
-			double wndRatio = (double)wndW / (double)wndH;
-			double conRatio = ((double)argW / (double)argH) * fontRatio;
-
-			if (wndRatio > conRatio)
-			{
-				newW = argW;
-				newH = (int)((conRatio / wndRatio) * argH);
-			}
-			else
-			{
-				newW = (int)((wndRatio / conRatio) * argW);
-				newH = argH;
-			}
+			newW = argW;
+			newH = argH;
 		}
 	}
 	else
 	{
-		if (fillArea)
-		{
-			if (conW != consoleInfo.conW || conH != consoleInfo.conH)
-			{
-				conW = consoleInfo.conW;
-				conH = consoleInfo.conH;
-				newW = consoleInfo.conW;
-				newH = consoleInfo.conH;
-			}
-		}
-		else if (conW != consoleInfo.conW || conH != consoleInfo.conH ||
-			fontRatio != consoleInfo.fontRatio)
+		if (conW != consoleInfo.conW || conH != consoleInfo.conH)
 		{
 			conW = consoleInfo.conW;
 			conH = consoleInfo.conH;
-			
-			if (constFontRatio == 0.0) { fontRatio = consoleInfo.fontRatio; }
-			else { fontRatio = constFontRatio; }
-
-			double wndRatio = (double)wndW / (double)wndH;
-			double conRatio = ((double)conW / (double)conH) * fontRatio;
-			if (wndRatio > conRatio)
-			{
-				newW = conW;
-				newH = (int)((conRatio / wndRatio) * conH);
-			}
-			else
-			{
-				newW = (int)((wndRatio / conRatio) * conW);
-				newH = conH;
-			}
+			newW = consoleInfo.conW;
+			newH = consoleInfo.conH;
 		}
 	}
 
@@ -222,6 +177,7 @@ static void drawWithWinAPI(Frame* frame)
 static void getConsoleInfo(ConsoleInfo* consoleInfo)
 {
 	const double DEFAULT_FONT_RATIO = 8.0 / 18.0;
+	const int USE_GET_CURRENT_CONSOLE_FONT = 0;
 
 	int fullConW, fullConH;
 	double fontRatio;
@@ -229,23 +185,36 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 	#ifdef _WIN32
 
 	CONSOLE_SCREEN_BUFFER_INFOEX consoleBufferInfo;
-	CONSOLE_FONT_INFOEX consoleFontInfo;
 	consoleBufferInfo.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
-	consoleFontInfo.cbSize = sizeof(CONSOLE_FONT_INFOEX);
 	GetConsoleScreenBufferInfoEx(outputHandle, &consoleBufferInfo);
-	GetCurrentConsoleFontEx(outputHandle, FALSE, &consoleFontInfo);
+
 	fullConW = consoleBufferInfo.srWindow.Right - consoleBufferInfo.srWindow.Left + 1;
 	fullConH = consoleBufferInfo.srWindow.Bottom - consoleBufferInfo.srWindow.Top + 1;
 
-	if (consoleFontInfo.dwFontSize.X == 0 ||
-		consoleFontInfo.dwFontSize.Y == 0)
+	RECT clientRect = { 0 };
+	if (!USE_GET_CURRENT_CONSOLE_FONT) { GetClientRect(conHWND, &clientRect); }
+
+	if (clientRect.bottom == 0 || fullConW == 0 || fullConH == 0)
 	{
-		fontRatio = DEFAULT_FONT_RATIO;
+		CONSOLE_FONT_INFOEX consoleFontInfo;
+		consoleFontInfo.cbSize = sizeof(CONSOLE_FONT_INFOEX);
+		GetCurrentConsoleFontEx(outputHandle, FALSE, &consoleFontInfo);
+
+		if (consoleFontInfo.dwFontSize.X == 0 ||
+			consoleFontInfo.dwFontSize.Y == 0)
+		{
+			fontRatio = DEFAULT_FONT_RATIO;
+		}
+		else
+		{
+			fontRatio = (double)consoleFontInfo.dwFontSize.X /
+				(double)consoleFontInfo.dwFontSize.Y;
+		}
 	}
 	else
 	{
-		fontRatio = (double)consoleFontInfo.dwFontSize.X/
-			(double)consoleFontInfo.dwFontSize.Y;
+		fontRatio = ((double)clientRect.right / (double)fullConW) /
+			((double)clientRect.bottom / (double)fullConH);
 	}
 
 	#else

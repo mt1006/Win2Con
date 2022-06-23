@@ -19,7 +19,8 @@ static int opHelp(int argc, char** argv);
 static int opInput(int argc, char** argv);
 static int opColors(int argc, char** argv);
 static int opSize(int argc, char** argv);
-static int opFill(int argc, char** argv);
+static int opScalingMode(int argc, char** argv);
+static int opClientArea(int argc, char** argv);
 static int opInformation(int argc, char** argv);
 static int opVersion(int argc, char** argv);
 static int opInterlaced(int argc, char** argv);
@@ -35,7 +36,8 @@ const Option OPTIONS[] = {
 	{"-i","--input",&opInput,0},
 	{"-c","--colors",&opColors,0},
 	{"-s","--size",&opSize,0},
-	{"-f","--fill",&opFill,0},
+	{"-sm","--scaling-mode",&opScalingMode,0},
+	{"-ca","--client-area",&opClientArea,0},
 	{"-inf","--information",&opInformation,1},
 	{"-v","--version",&opVersion,1},
 	{"-int","--interlaced",&opInterlaced,0},
@@ -136,16 +138,9 @@ static int opInput(int argc, char** argv)
 
 static int opColors(int argc, char** argv)
 {
-	if (argc > 0 && argv[0][0] != '-')
-	{
-		colorMode = colorModeFromStr(argv[0]);
-		return 1;
-	}
-	else
-	{
-		colorMode = W2C_DEFAULT_COLOR_MODE_C;
-		return 0;
-	}
+	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
+	colorMode = colorModeFromStr(argv[0]);
+	return 1;
 }
 
 static int opSize(int argc, char** argv)
@@ -160,9 +155,55 @@ static int opSize(int argc, char** argv)
 	return 2;
 }
 
-static int opFill(int argc, char** argv)
+static int opScalingMode(int argc, char** argv)
 {
-	fillArea = 1;
+	if (argc < 1 || argv[0][0] != '#') { invalidSyntax(__LINE__); }
+
+	for (int i = 0; i < strlen(argv[0]); i++)
+	{
+		argv[0][i] = (char)tolower((int)argv[0][i]);
+	}
+	if (!strcmp(argv[0], "#int-fraction")) { scalingMode = SM_INT_FRACTION; }
+	else if (!strcmp(argv[0], "#int")) { scalingMode = SM_INT; }
+	else if (!strcmp(argv[0], "#const")) { scalingMode = SM_CONST; }
+	else if (!strcmp(argv[0], "#no-scaling")) { charset = SM_NO_SCALING; }
+	else { error("Invalid scaling mode name!", "argParser.c", __LINE__); }
+	
+	if (scalingMode == SM_CONST)
+	{
+		if (argc < 3) { invalidSyntax(__LINE__); }
+
+		int constScaleX = atoi(argv[1]);
+		int constScaleY = atoi(argv[2]);
+		if (constScaleX == 0 || constScaleY == 0)
+		{
+			error("Invalid const scaling value!", "argParser.c", __LINE__);
+		}
+
+		if (constScaleX > 0) { scaleXMul = constScaleX; }
+		else { scaleXDiv = -constScaleX; }
+		if (constScaleY > 0) { scaleYMul = constScaleY; }
+		else { scaleYDiv = -constScaleY; }
+
+		return 3;
+	}
+	else if (argc < 2 && argv[1][0] != '-')
+	{
+		scaleWithRatio = atoi(argv[1]);
+		if (scaleWithRatio != 0 && scaleWithRatio != 1)
+		{
+			error("Invalid scaling mode argument value!", "argParser.c", __LINE__);
+		}
+
+		return 2;
+	}
+
+	return 1;
+}
+
+static int opClientArea(int argc, char** argv)
+{
+	pwClientArea = 1;
 	return 0;
 }
 

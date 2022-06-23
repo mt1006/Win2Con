@@ -9,8 +9,10 @@ static uint8_t* setBitmap(int w, int h);
 void initGetFrame(HWND inputWindow)
 {
 	SetProcessDPIAware();
+
 	hwnd = inputWindow;
 	hdc = CreateCompatibleDC(GetDC(NULL));
+
 	refreshWinSize();
 }
 
@@ -32,23 +34,12 @@ void refreshWinSize(void)
 
 void getFrame(Frame* frame)
 {
-	PrintWindow(hwnd, hdc, PW_RENDERFULLCONTENT);
-	frame->bitmapArray = bitmapArray;
+	UINT pwMode;
+	if (pwClientArea) { pwMode = PW_CLIENTONLY; }
+	else { pwMode = PW_RENDERFULLCONTENT; }
 
-	/*puts("P3");
-	printf("%d %d\n", wndW, wndH);
-	puts("255");
-	for (int i = wndH - 1; i > 0; i--)
-	{
-		for (int j = 0; j < wndW; j++)
-		{
-			printf("%d %d %d ", bitmapArray[(i * wndW + j) * 4 + 2],
-				bitmapArray[(i * wndW + j) * 4 + 1],
-				bitmapArray[(i * wndW + j) * 4]);
-		}
-		puts("");
-	}
-	exit(0);*/
+	PrintWindow(hwnd, hdc, pwMode);
+	frame->bitmapArray = bitmapArray;
 }
 
 static uint8_t* setBitmap(int w, int h)

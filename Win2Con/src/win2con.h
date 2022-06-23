@@ -15,6 +15,7 @@
 
 #include <process.h>
 #include <Windows.h>
+#include <dwmapi.h>
 #define W2C_OS "Windows"
 
 #else
@@ -48,12 +49,12 @@
 #ifdef _WIN32
 
 #define W2C_DEFAULT_COLOR_MODE CM_CSTD_256
-#define W2C_DEFAULT_COLOR_MODE_C CM_CSTD_256
+#define W2C_DEFAULT_SCALING_MODE SM_INT_FRACTION
 
 #else
 
 #define W2C_DEFAULT_COLOR_MODE CM_CSTD_256
-#define W2C_DEFAULT_COLOR_MODE_C CM_CSTD_256
+#define W2C_DEFAULT_SCALING_MODE SM_INT_FRACTION
 
 #endif
 
@@ -67,6 +68,14 @@ typedef enum
 	CM_CSTD_RGB
 } ColorMode;
 
+typedef enum
+{
+	SM_INT_FRACTION,
+	SM_INT,
+	SM_CONST,
+	SM_NO_SCALING
+} ScalingMode;
+
 typedef struct
 {
 	uint8_t* bitmapArray;
@@ -78,8 +87,12 @@ extern int imgW, imgH;
 extern int conW, conH;
 extern int wndW, wndH;
 extern int argW, argH;
-extern int fillArea;
+extern int scaleXMul, scaleYMul;
+extern int scaleXDiv, scaleYDiv;
+extern int scaleWithRatio;
+extern int pwClientArea;
 extern ColorMode colorMode;
+extern ScalingMode scalingMode;
 extern int scanlineCount, scanlineHeight;
 extern double fps;
 extern char* charset;
