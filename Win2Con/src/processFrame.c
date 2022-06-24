@@ -255,22 +255,36 @@ void processFrame(Frame* frame)
 
 			isFirstChar = 0;
 
-			wndJMul++;
-			if (wndJMul == scaleXMul)
+			if (scalingMode == SM_FILL)
 			{
-				wndJ += scaleXDiv;
-				wndJMul = 0;
+				wndJ = j * wndW / conW;
+			}
+			else
+			{
+				wndJMul++;
+				if (wndJMul == scaleXMul)
+				{
+					wndJ += scaleXDiv;
+					wndJMul = 0;
+				}
 			}
 		}
 
 		output[offset] = '\n';
 		frame->outputLineOffsets[i + 1] = offset + 1;
 
-		wndIMul++;
-		if (wndIMul == scaleYMul)
+		if (scalingMode == SM_FILL)
 		{
-			wndI -= scaleYDiv;
-			wndIMul = 0;
+			wndI = wndH - (i * wndH / conH) - 1;
+		}
+		else
+		{
+			wndIMul++;
+			if (wndIMul == scaleYMul)
+			{
+				wndI -= scaleYDiv;
+				wndIMul = 0;
+			}
 		}
 	}
 

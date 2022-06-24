@@ -3,14 +3,16 @@
 static void helpBasicOptions(void);
 static void helpAdvancedOptions(void);
 static void helpColorModes(void);
+static void helpScalingModes(void);
 static void helpKeyboard(void);
 
-void showHelp(int basic, int advanced, int colorModes, int keyboard)
+void showHelp(int basic, int advanced, int colorModes, int scalingModes, int keyboard)
 {
 	puts("Win2Con - Help\n");
 	if (basic) { helpBasicOptions(); }
 	if (advanced) { helpAdvancedOptions(); }
 	if (colorModes) { helpColorModes(); }
+	if (scalingModes) { helpScalingModes(); }
 	if (keyboard) { helpKeyboard(); }
 }
 
@@ -69,12 +71,17 @@ static void helpBasicOptions(void)
 		"                     (will not change with the console size change).\n"
 		"                     Examples:\n"
 		"                      win2con -s 120 50\n"
+		" -sm [mode] [...]    Sets scaling mode.\n"
+		"  (--scaling-mode)   Default scaling mode is \"fill\" with enabled keeping ratio.\n"
+		"                     To get list of all avaible scaling modes use \"win2con -h scaling-modes\"\n"
+		"                     Examples:\n"
+		"                      win2con -sm no-scaling\n"
 		" -ca (--client-area) Gets only window client area (without title bar or menu).\n"
 		"                     It may not work properly in some cases!\n"
 		" -inf(--information) Information about Win2Con.\n"
 		" -v  (--version)     Information about Win2Con version.\n"
 		" -h <topic>          Displays help message.\n"
-		"  (--help)           Topics: basic, advanced, color-modes, keyboard, full\n");
+		"  (--help)           Topics: basic, advanced, color-modes, scaling-modes, keyboard, full\n");
 }
 
 static void helpAdvancedOptions(void)
@@ -120,6 +127,17 @@ static void helpColorModes(void)
 		" >cstd-16\n"
 		" >cstd-256 (defaults to \"-c\")\n"
 		" >cstd-rgb\n");
+}
+
+static void helpScalingModes(void)
+{
+	puts(
+		"Scaling modes:\n"
+		" >fill <keep-ratio> (default with enabled keeping ratio)\n"
+		" >int <keep-ratio>\n"
+		" >int-fraction <keep-ratio>\n"
+		" >const [x] [y]\n"
+		" >no-scaling\n");
 }
 
 static void helpKeyboard(void)

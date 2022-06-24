@@ -115,24 +115,6 @@ uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b)
 		+ round((double)b / 255.0 * 5.0));
 }
 
-ColorMode colorModeFromStr(char* str)
-{
-	for (int i = 0; i < strlen(str); i++)
-	{
-		str[i] = (char)tolower((int)str[i]);
-	}
-
-	if (!strcmp(str, "winapi-gray")) { return CM_WINAPI_GRAY; }
-	else if (!strcmp(str, "winapi-16")) { return CM_WINAPI_16; }
-	else if (!strcmp(str, "cstd-gray")) { return CM_CSTD_GRAY; }
-	else if (!strcmp(str, "cstd-16")) { return CM_CSTD_16; }
-	else if (!strcmp(str, "cstd-256")) { return CM_CSTD_256; }
-	else if (!strcmp(str, "cstd-rgb")) { return CM_CSTD_RGB; }
-
-	error("Invalid color mode!", "utils.c", __LINE__);
-	return CM_WINAPI_GRAY;
-}
-
 void error(const char* description, const char* fileName, int line)
 {
 	puts("\nSomething went wrong...");

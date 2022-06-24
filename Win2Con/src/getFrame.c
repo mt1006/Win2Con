@@ -8,7 +8,7 @@ static uint8_t* setBitmap(int w, int h);
 
 void initGetFrame(HWND inputWindow)
 {
-	SetProcessDPIAware();
+	if (!ignoreDPI) { SetProcessDPIAware(); }
 
 	hwnd = inputWindow;
 	hdc = CreateCompatibleDC(GetDC(NULL));

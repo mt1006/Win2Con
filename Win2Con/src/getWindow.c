@@ -1,6 +1,6 @@
 #include "win2con.h"
 
-#define W2C_MAX_INPUT_LEN 32
+#define W2C_MAX_INPUT_LEN 1024
 #define W2C_MAX_NAME_LEN 128
 #define W2C_MAX_WND_COUNT 2048
 
@@ -9,11 +9,16 @@ static int checkIfAltTab;
 static HWND* hwndArray;
 static int hwndArrayPos;
 
-static long long stdInput(const char* prompt, int base);
+static long long menuInput(const char* prompt, int base);
 static void printWindowList(int full, HWND parent);
 static int printWindowInfo(HWND hwnd, int pos);
 static int isAltTabWindow(HWND hwnd);
 static BOOL CALLBACK enumWindowsProc(HWND hwnd, LPARAM lParam);
+
+//https://stackoverflow.com/a/1706733/18214530
+static int setArgs(char* args, char** argv);
+static char** parsedArgs(char* args, int* argc);
+static void freeParsedArgs(char** argv);
 
 HWND getWindow(void)
 {
@@ -28,7 +33,7 @@ HWND getWindow(void)
 		puts("Select window:\n");
 		printWindowList(fullList, NULL);
 
-		int selection = (int)stdInput(":", 10);
+		int selection = (int)menuInput(":", 10);
 
 		if (selection > 0 && selection < currentPos)
 		{
@@ -57,14 +62,20 @@ HWND getWindow(void)
 	return selectedHWND;
 }
 
-static long long stdInput(const char* prompt, int base)
+static long long menuInput(const char* prompt, int base)
 {
 	char inputStr[W2C_MAX_INPUT_LEN];
 
 	fputs(prompt, stdout);
 	fgets(inputStr, W2C_MAX_INPUT_LEN, stdin);
 
-	return strtoll(inputStr, NULL, base);
+	int argc, exitReq;
+	char** argv = parsedArgs(inputStr, &argc);
+	long long retVal = argumentParser(argc, argv, &exitReq, base);
+	freeParsedArgs(argv);
+
+	if (exitReq) { exit(0); }
+	return retVal;
 }
 
 static void printWindowList(int full, HWND parent)
@@ -140,4 +151,50 @@ static BOOL CALLBACK enumWindowsProc(HWND hwnd, LPARAM lParam)
 		}
 	}
 	return TRUE;
+}
+
+//Source for str to argv parser: https://stackoverflow.com/a/1706733/18214530
+
+static int setArgs(char* args, char** argv)
+{
+	int count = 0;
+	while (isspace(*args)) ++args;
+	while (*args)
+	{
+		if (argv) { argv[count] = args; }
+		while (*args && !isspace(*args)) { ++args; }
+		if (argv && *args) { *args++ = '\0'; }
+		while (isspace(*args)) { ++args; }
+		count++;
+	}
+	return count;
+}
+
+static char** parsedArgs(char* args, int* argc)
+{
+	char** argv = NULL;
+	int argn = 0;
+
+	if (args && *args &&
+		(args = strdup(args)) &&
+		(argn = setArgs(args, NULL)) &&
+		(argv = malloc((argn + 1) * sizeof(char*))))
+	{
+		*argv++ = args;
+		argn = setArgs(args, argv);
+	}
+
+	if (args && !argv) { free(args); }
+
+	*argc = argn;
+	return argv;
+}
+
+static void freeParsedArgs(char** argv)
+{
+	if (argv)
+	{
+		free(argv[-1]);
+		free(argv - 1);
+	}
 }

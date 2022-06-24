@@ -6,7 +6,7 @@ int wndW = -1, wndH = -1;
 int argW = -1, argH = -1;
 int scaleXMul = 1, scaleYMul = 1;
 int scaleXDiv = 1, scaleYDiv = 1;
-int scaleWithRatio = 0;
+int scaleWithRatio = 1;
 int pwClientArea = 0;
 ColorMode colorMode = W2C_DEFAULT_COLOR_MODE;
 ScalingMode scalingMode = W2C_DEFAULT_SCALING_MODE;
@@ -15,7 +15,7 @@ double fps;
 char* charset = NULL;
 int charsetSize = 0;
 double fontRatio = 1.0, constFontRatio = 0.0;
-int disableKeyboard = 0, disableCLS = 0;
+int disableKeyboard = 0, disableCLS = 0, ignoreDPI = 0;
 
 void init(HWND inputWindow)
 {
@@ -61,7 +61,7 @@ void loop(void)
 int main(int argc, char** argv)
 {
 	int exitReq = 0;
-	HWND inputWindow = argumentParser(argc - 1, argv + 1, &exitReq);
+	HWND inputWindow = (HWND)argumentParser(argc - 1, argv + 1, &exitReq, 16);
 	if (exitReq) { exit(0); }
 
 	init(inputWindow);

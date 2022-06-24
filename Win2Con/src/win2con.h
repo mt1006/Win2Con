@@ -50,12 +50,12 @@
 #ifdef _WIN32
 
 #define W2C_DEFAULT_COLOR_MODE CM_CSTD_256
-#define W2C_DEFAULT_SCALING_MODE SM_INT_FRACTION
+#define W2C_DEFAULT_SCALING_MODE SM_FILL
 
 #else
 
 #define W2C_DEFAULT_COLOR_MODE CM_CSTD_256
-#define W2C_DEFAULT_SCALING_MODE SM_INT_FRACTION
+#define W2C_DEFAULT_SCALING_MODE SM_FILL
 
 #endif
 
@@ -71,8 +71,9 @@ typedef enum
 
 typedef enum
 {
-	SM_INT_FRACTION,
+	SM_FILL,
 	SM_INT,
+	SM_INT_FRACTION,
 	SM_CONST,
 	SM_NO_SCALING
 } ScalingMode;
@@ -99,10 +100,10 @@ extern double fps;
 extern char* charset;
 extern int charsetSize;
 extern double fontRatio, constFontRatio;
-extern int disableKeyboard, disableCLS;
+extern int disableKeyboard, disableCLS, ignoreDPI;
 
 //argParser.c
-extern HWND argumentParser(int argc, char** argv, int* exitReq);
+extern long long argumentParser(int argc, char** argv, int* exitReq, int inputNumBase);
 
 //getWindow.c
 extern HWND getWindow(void);
@@ -126,7 +127,7 @@ extern void drawFrame(Frame* frame);
 extern void initConInput(void);
 
 //help.c
-extern void showHelp(int basic, int advanced, int colorModes, int keyboard);
+extern void showHelp(int basic, int advanced, int colorModes, int scalingModes, int keyboard);
 extern void showInfo(void);
 extern void showFullInfo(void);
 extern void showVersion(void);
@@ -138,7 +139,6 @@ extern void setDefaultColor(void);
 extern void setCursorPos(HANDLE outputHandle, int x, int y);
 extern size_t getOutputArraySize(void);
 extern uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b);
-extern ColorMode colorModeFromStr(char* str);
 extern void error(const char* description, const char* fileName, int line);
 
 #ifndef _WIN32

@@ -28,6 +28,7 @@ static int opCharset(int argc, char** argv);
 static int opFontRatio(int argc, char** argv);
 static int opDisableCLS(int argc, char** argv);
 static int opDisableKeys(int argc, char** argv);
+static int opIgnoreDPI(int argc, char** argv);
 static int opFullInfo(int argc, char** argv);
 static void invalidSyntax(int line);
 
@@ -45,19 +46,40 @@ const Option OPTIONS[] = {
 	{"-fr","--font-ratio",&opFontRatio,0},
 	{"-dcls","--disable-cls",&opDisableCLS,0},
 	{"-dk","--disable-keys",&opDisableKeys,0},
+	{"-idpi","--ignore-dpi",&opIgnoreDPI,0},
 	{"-fi","--full-info",&opFullInfo,1} };
 
 static int optionCount;
-static HWND inputWindow = NULL;
+static long long inputVal = 0;
+static int argumentsPassed = 0;
 
-HWND argumentParser(int argc, char** argv, int* exitReq)
+long long argumentParser(int argc, char** argv, int* exitReq, int inputNumBase)
 {
+	static int firstCall = 1;
+
+	if (firstCall)
+	{
+		charset = CHARSET_LONG;
+		charsetSize = (int)strlen(charset);
+		firstCall = 0;
+	}
+
 	*exitReq = 0;
+	if (argc == 0) { return 0; }
+	if (argc == 1 && argv[0][0] != '-')
+	{
+		return strtoll(argv[0], NULL, inputNumBase);
+	}
+
+	if (argumentsPassed)
+	{
+		puts("\nArguments already passed!");
+		return 0;
+	}
+	argumentsPassed = 1;
+
 	optionCount = sizeof(OPTIONS) / sizeof(Option);
 	int* usedOptions = calloc(optionCount, sizeof(int));
-
-	charset = CHARSET_LONG;
-	charsetSize = (int)strlen(charset);
 
 	char** input = (char**)malloc(argc * sizeof(char*));
 	for (int i = 0; i < argc; i++)
@@ -125,21 +147,33 @@ HWND argumentParser(int argc, char** argv, int* exitReq)
 	free(input);
 	free(usedOptions);
 
-	return inputWindow;
+	return inputVal;
 }
 
 static int opInput(int argc, char** argv)
 {
 	const int INPUT_NUM_BASE = 16;
 	if (argc < 1) { invalidSyntax(__LINE__); }
-	inputWindow = (HWND)strtoll(argv[0], NULL, INPUT_NUM_BASE);
+	inputVal = strtoll(argv[0], NULL, INPUT_NUM_BASE);
 	return 1;
 }
 
 static int opColors(int argc, char** argv)
 {
 	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
-	colorMode = colorModeFromStr(argv[0]);
+
+	for (int i = 0; i < strlen(argv[0]); i++)
+	{
+		argv[0][i] = (char)tolower((int)argv[0][i]);
+	}
+	if (!strcmp(argv[0], "winapi-gray")) { colorMode = CM_WINAPI_GRAY; }
+	else if (!strcmp(argv[0], "winapi-16")) { colorMode = CM_WINAPI_16; }
+	else if (!strcmp(argv[0], "cstd-gray")) { colorMode = CM_CSTD_GRAY; }
+	else if (!strcmp(argv[0], "cstd-16")) { colorMode = CM_CSTD_16; }
+	else if (!strcmp(argv[0], "cstd-256")) { colorMode = CM_CSTD_256; }
+	else if (!strcmp(argv[0], "cstd-rgb")) { colorMode = CM_CSTD_RGB; }
+	else { error("Invalid color mode!", "argParser.c", __LINE__); }
+
 	return 1;
 }
 
@@ -157,16 +191,18 @@ static int opSize(int argc, char** argv)
 
 static int opScalingMode(int argc, char** argv)
 {
-	if (argc < 1 || argv[0][0] != '#') { invalidSyntax(__LINE__); }
+	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
+	scaleWithRatio = 0;
 
 	for (int i = 0; i < strlen(argv[0]); i++)
 	{
 		argv[0][i] = (char)tolower((int)argv[0][i]);
 	}
-	if (!strcmp(argv[0], "#int-fraction")) { scalingMode = SM_INT_FRACTION; }
-	else if (!strcmp(argv[0], "#int")) { scalingMode = SM_INT; }
-	else if (!strcmp(argv[0], "#const")) { scalingMode = SM_CONST; }
-	else if (!strcmp(argv[0], "#no-scaling")) { charset = SM_NO_SCALING; }
+	if (!strcmp(argv[0], "fill")) { scalingMode = SM_FILL; }
+	else if (!strcmp(argv[0], "int")) { scalingMode = SM_INT; }
+	else if (!strcmp(argv[0], "int-fraction")) { scalingMode = SM_INT_FRACTION; }
+	else if (!strcmp(argv[0], "const")) { scalingMode = SM_CONST; }
+	else if (!strcmp(argv[0], "no-scaling")) { scalingMode = SM_NO_SCALING; }
 	else { error("Invalid scaling mode name!", "argParser.c", __LINE__); }
 	
 	if (scalingMode == SM_CONST)
@@ -187,7 +223,7 @@ static int opScalingMode(int argc, char** argv)
 
 		return 3;
 	}
-	else if (argc < 2 && argv[1][0] != '-')
+	else if (argc > 1 && argv[1][0] != '-')
 	{
 		scaleWithRatio = atoi(argv[1]);
 		if (scaleWithRatio != 0 && scaleWithRatio != 1)
@@ -229,18 +265,19 @@ static int opHelp(int argc, char** argv)
 		{
 			argv[0][i] = (char)tolower((int)argv[0][i]);
 		}
-		if (!strcmp(argv[0], "basic")) { showHelp(1, 0, 0, 0); }
-		else if (!strcmp(argv[0], "advanced")) { showHelp(0, 1, 0, 0); }
-		else if (!strcmp(argv[0], "color-modes")) { showHelp(0, 0, 1, 0); }
-		else if (!strcmp(argv[0], "keyboard")) { showHelp(0, 0, 0, 1); }
-		else if (!strcmp(argv[0], "full")) { showHelp(1, 1, 1, 1); }
+		if (!strcmp(argv[0], "basic")) { showHelp(1, 0, 0, 0, 0); }
+		else if (!strcmp(argv[0], "advanced")) { showHelp(0, 1, 0, 0, 0); }
+		else if (!strcmp(argv[0], "color-modes")) { showHelp(0, 0, 1, 0, 0); }
+		else if (!strcmp(argv[0], "scaling-modes")) { showHelp(0, 0, 0, 1, 0); }
+		else if (!strcmp(argv[0], "keyboard")) { showHelp(0, 0, 0, 0, 1); }
+		else if (!strcmp(argv[0], "full")) { showHelp(1, 1, 1, 1, 1); }
 		else { error("Invalid help topic!", "argParser.c", __LINE__); }
 		return 1;
 	}
 	else if (argc == 0)
 	{
-		showHelp(1, 0, 0, 1);
-		puts("[To see full help use \"conpl -h full\"]");
+		showHelp(1, 0, 0, 0, 1);
+		puts("[To see full help use \"win2con -h full\"]");
 	}
 	else
 	{
@@ -316,6 +353,12 @@ static int opDisableCLS(int argc, char** argv)
 static int opDisableKeys(int argc, char** argv)
 {
 	disableKeyboard = 1;
+	return 0;
+}
+
+static int opIgnoreDPI(int argc, char** argv)
+{
+	ignoreDPI = 1;
 	return 0;
 }
 
