@@ -56,15 +56,18 @@ static ThreadRetType CALL_CONV conThread(void* ptr)
 			{
 			case KEY_EVENT:
 				if (input[i].Event.KeyEvent.bKeyDown) { msg = WM_KEYDOWN; }
-				else { break; }
+				else { msg = WM_KEYUP; }
 
-				PostMessageA(hwnd, msg, input[i].Event.KeyEvent.wVirtualKeyCode,
-					input[i].Event.KeyEvent.wRepeatCount & 0xFFFF |
-					((input[i].Event.KeyEvent.wVirtualScanCode & 0xFF) << 16));
+				LPARAM lParam = input[i].Event.KeyEvent.wRepeatCount & 0xFFFF |
+					((input[i].Event.KeyEvent.wVirtualScanCode & 0xFF) << 16);
+				if (msg == WM_KEYUP) { lParam |= 0b11 << 30; }
+
+				PostMessageA(hwnd, msg, input[i].Event.KeyEvent.wVirtualKeyCode, lParam);
 
 				break;
 
 			case MOUSE_EVENT:
+
 				break;
 			}
 		}
