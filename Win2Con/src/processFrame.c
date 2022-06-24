@@ -18,6 +18,97 @@ void initProcessFrame(void)
 	return;
 }
 
+void refreshScaling(void)
+{
+	if (conW == 0 || conH == 0 ||
+		wndW == 0 || wndH == 0 ||
+		fontRatio == 0.0)
+	{
+		return;
+	}
+
+	switch (scalingMode)
+	{
+	case SM_INT_FRACTION:
+		if (scaleWithRatio)
+		{
+
+		}
+		else
+		{
+			if (conW >= wndW)
+			{
+				scaleXMul = conW / wndW;
+				scaleXDiv = 1;
+			}
+			else
+			{
+				scaleXMul = 1;
+				scaleXDiv = (wndW / conW) + 1;
+			}
+
+			if (conH >= wndH)
+			{
+				scaleYMul = conH / wndH;
+				scaleYDiv = 1;
+			}
+			else
+			{
+				scaleYMul = 1;
+				scaleYDiv = (wndH / conH) + 1;
+			}
+		}
+		break;
+
+	case SM_INT:
+		if (scaleWithRatio)
+		{
+
+		}
+		else
+		{
+			if (conW >= wndW) { scaleXMul = conW / wndW; }
+			else { scaleXMul = 1; }
+
+			if (conH >= wndH) { scaleYMul = conH / wndH; }
+			else { scaleYMul = 1; }
+		}
+
+		scaleXDiv = 1;
+		scaleYDiv = 1;
+		break;
+
+	case SM_NO_SCALING:
+		if (scaleWithRatio)
+		{
+			if (fontRatio > 1.0)
+			{
+				scaleXMul = 1;
+
+				scaleYMul = (int)round(fontRatio);
+				if (scaleYMul > conH / wndH) { scaleYMul = conH / wndH; }
+				if (scaleYMul < 1) { scaleYMul = 1; }
+			}
+			else
+			{
+				scaleYMul = 1;
+
+				scaleXMul = (int)round(1.0 / fontRatio);
+				if (scaleXMul > conW / wndW) { scaleXMul = conW / wndW; }
+				if (scaleXMul < 1) { scaleXMul = 1; }
+			}
+		}
+		else
+		{
+			scaleXMul = 1;
+			scaleYMul = 1;
+		}
+
+		scaleXDiv = 1;
+		scaleYDiv = 1;
+	}
+}
+
 void processFrame(Frame* frame)
 {
 	static int lastW = 0, lastH = 0;
@@ -40,7 +131,7 @@ void processFrame(Frame* frame)
 	uint8_t* output = (uint8_t*)frame->output;
 	frame->outputLineOffsets[0] = 0;
 
-	int wndI = wndH - 1;
+	int wndI = wndH - 1, wndIMul = 0;
 	for (int i = 0; i < imgH; i++)
 	{
 		uint8_t oldColor = -1;
@@ -49,18 +140,19 @@ void processFrame(Frame* frame)
 
 		int offset = frame->outputLineOffsets[i];
 
+		int wndJ = 0, wndJMul = 0;
 		for (int j = 0; j < imgW; j++)
 		{
-			if (j >= wndW || i >= wndH)
+			if (wndJ >= wndW || wndI < 0)
 			{
 				output[offset] = ' ';
 				offset++;
 				continue;
 			}
 
-			uint8_t valR = frame->bitmapArray[((wndI * wndW) + j) * 4 + 2];
-			uint8_t valG = frame->bitmapArray[((wndI * wndW) + j) * 4 + 1];
-			uint8_t valB = frame->bitmapArray[((wndI * wndW) + j) * 4];
+			uint8_t valR = frame->bitmapArray[((wndI * wndW) + wndJ) * 4 + 2];
+			uint8_t valG = frame->bitmapArray[((wndI * wndW) + wndJ) * 4 + 1];
+			uint8_t valB = frame->bitmapArray[((wndI * wndW) + wndJ) * 4];
 
 			uint8_t val, color;
 
@@ -162,12 +254,24 @@ void processFrame(Frame* frame)
 			}
 
 			isFirstChar = 0;
+
+			wndJMul++;
+			if (wndJMul == scaleXMul)
+			{
+				wndJ += scaleXDiv;
+				wndJMul = 0;
+			}
 		}
 
 		output[offset] = '\n';
 		frame->outputLineOffsets[i + 1] = offset + 1;
 
-		wndI--;
+		wndIMul++;
+		if (wndIMul == scaleYMul)
+		{
+			wndI -= scaleYDiv;
+			wndIMul = 0;
+		}
 	}
 
 	if (!disableCLS)

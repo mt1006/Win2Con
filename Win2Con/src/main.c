@@ -14,7 +14,7 @@ int scanlineCount = 1, scanlineHeight = 1;
 double fps;
 char* charset = NULL;
 int charsetSize = 0;
-double constFontRatio = 0.0;
+double fontRatio = 1.0, constFontRatio = 0.0;
 int disableKeyboard = 0, disableCLS = 0;
 
 void init(HWND inputWindow)
@@ -48,6 +48,7 @@ void loop(void)
 		{
 			refreshConSize();
 			refreshWinSize();
+			refreshScaling();
 			lastRefresh = curTime;
 		}
 

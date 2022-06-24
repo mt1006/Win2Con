@@ -98,7 +98,7 @@ extern int scanlineCount, scanlineHeight;
 extern double fps;
 extern char* charset;
 extern int charsetSize;
-extern double constFontRatio;
+extern double fontRatio, constFontRatio;
 extern int disableKeyboard, disableCLS;
 
 //argParser.c
@@ -114,6 +114,7 @@ extern void getFrame(Frame* frame);
 
 //processFrame.c
 extern void initProcessFrame(void);
+extern void refreshScaling(void);
 extern void processFrame(Frame* frame);
 
 //drawFrame.c

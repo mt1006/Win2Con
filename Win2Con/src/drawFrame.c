@@ -38,12 +38,13 @@ void refreshConSize(void)
 	static int firstCall = 1;
 	static int setNewSize = 0;
 	static int lastW = 0, lastH = 0;
-	static double fontRatio = 0.0;
+	static double lastFR = 0.0;
 
 	ConsoleInfo consoleInfo;
 	getConsoleInfo(&consoleInfo);
 
 	int newW = lastW, newH = lastH;
+	double newFR = consoleInfo.fontRatio;
 
 	if (argW != -1 && argH != -1)
 	{
@@ -74,22 +75,28 @@ void refreshConSize(void)
 	{
 		imgW = newW;
 		imgH = newH;
+		fontRatio = newFR;
 		lastW = imgW;
 		lastH = imgH;
+		lastFR = fontRatio;
 		firstCall = 0;
 	}
 	else
 	{
-		if (newW != lastW || newH != lastH)
+		if (newW != lastW ||
+			newH != lastH ||
+			newFR != lastFR)
 		{
 			lastW = newW;
 			lastH = newH;
+			lastFR = newFR;
 			setNewSize = 1;
 		}
 		else if (setNewSize)
 		{
 			imgW = newW;
 			imgH = newH;
+			fontRatio = newFR;
 			setNewSize = 0;
 		}
 	}
