@@ -9,6 +9,9 @@ typedef struct
 
 static HWND conHWND = NULL;
 static HANDLE outputHandle = NULL;
+static HANDLE inputHandle = NULL;
+static DWORD oldOutputMode, oldInputMode;
+static int outputModeChanged = 0, inputModeChanged = 0;
 
 static void drawWithWinAPI(Frame* frame);
 static void getConsoleInfo(ConsoleInfo* consoleInfo);
@@ -18,16 +21,26 @@ void initDrawFrame(void)
 	#ifdef _WIN32
 	conHWND = GetConsoleWindow();
 	outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	inputHandle = GetStdHandle(STD_INPUT_HANDLE);
 
+	DWORD mode;
 	if (colorMode == CM_CSTD_16 ||
 		colorMode == CM_CSTD_256 ||
 		colorMode == CM_CSTD_RGB)
 	{
-		DWORD mode;
 		GetConsoleMode(outputHandle, &mode);
+		oldOutputMode = mode;
 		mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 		SetConsoleMode(outputHandle, mode);
+		outputModeChanged = 1;
 	}
+
+	GetConsoleMode(inputHandle, &mode);
+	oldInputMode = mode;
+	mode &= ~ENABLE_QUICK_EDIT_MODE;
+	mode |= ENABLE_MOUSE_INPUT;
+	SetConsoleMode(inputHandle, mode);
+	inputModeChanged = 1;
 	#endif
 
 	refreshConSize();
@@ -242,4 +255,10 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 	consoleInfo->conW = fullConW;
 	consoleInfo->conH = fullConH;
 	consoleInfo->fontRatio = fontRatio;
+}
+
+void restoreConsoleMode()
+{
+	if (outputModeChanged) { SetConsoleMode(outputHandle, oldOutputMode); }
+	if (inputModeChanged) { SetConsoleMode(inputHandle, oldInputMode); }
 }

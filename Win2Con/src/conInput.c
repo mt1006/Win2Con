@@ -20,7 +20,6 @@ static ThreadRetType CALL_CONV conThread(void* ptr);
 
 void initConInput(void)
 {
-	return;
 	#ifdef _WIN32
 	
 	if (!disableKeyboard)
@@ -41,9 +40,34 @@ void initConInput(void)
 static ThreadRetType CALL_CONV conThread(void* ptr)
 {
 	#ifdef _WIN32
+	INPUT_RECORD input[128];
+	DWORD read;
+	HANDLE inputHandle = GetStdHandle(STD_INPUT_HANDLE);
+
 	while (1)
 	{
-		Sleep(100);
+		ReadConsoleInputA(inputHandle, input, 128, &read);
+		FlushConsoleInputBuffer(inputHandle);
+
+		for (int i = 0; i < read; i++)
+		{
+			UINT msg;
+			switch (input[i].EventType)
+			{
+			case KEY_EVENT:
+				if (input[i].Event.KeyEvent.bKeyDown) { msg = WM_KEYDOWN; }
+				else { break; }
+
+				PostMessageA(hwnd, msg, input[i].Event.KeyEvent.wVirtualKeyCode,
+					input[i].Event.KeyEvent.wRepeatCount & 0xFFFF |
+					((input[i].Event.KeyEvent.wVirtualScanCode & 0xFF) << 16));
+
+				break;
+
+			case MOUSE_EVENT:
+				break;
+			}
+		}
 	}
 	#endif
 }

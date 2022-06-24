@@ -51,7 +51,7 @@ HWND getWindow(void)
 		}
 		else if (selection == currentPos + 2)
 		{
-			exit(0);
+			w2cExit(0);
 		}
 
 		fputs("\nUnknown option...", stdout);
@@ -74,7 +74,7 @@ static long long menuInput(const char* prompt, int base)
 	long long retVal = argumentParser(argc, argv, &exitReq, base);
 	freeParsedArgs(argv);
 
-	if (exitReq) { exit(0); }
+	if (exitReq) { w2cExit(0); }
 	return retVal;
 }
 

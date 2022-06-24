@@ -115,11 +115,18 @@ uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b)
 		+ round((double)b / 255.0 * 5.0));
 }
 
+void w2cExit(int code)
+{
+	restoreConsoleMode();
+	setDefaultColor();
+	exit(code);
+}
+
 void error(const char* description, const char* fileName, int line)
 {
 	puts("\nSomething went wrong...");
 	printf("%s [%s:%d]\n", description, fileName, line);
-	exit(-1);
+	w2cExit(-1);
 }
 
 #ifndef _WIN32

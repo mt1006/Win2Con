@@ -1,18 +1,14 @@
 #include "win2con.h"
 
-static HWND hwnd;
 static HDC hdc;
 static uint8_t* bitmapArray = NULL;
 
 static uint8_t* setBitmap(int w, int h);
 
-void initGetFrame(HWND inputWindow)
+void initGetFrame(void)
 {
 	if (!ignoreDPI) { SetProcessDPIAware(); }
-
-	hwnd = inputWindow;
 	hdc = CreateCompatibleDC(GetDC(NULL));
-
 	refreshWinSize();
 }
 

@@ -85,6 +85,7 @@ typedef struct
 	int* outputLineOffsets;
 } Frame;
 
+extern HWND hwnd;
 extern int imgW, imgH;
 extern int conW, conH;
 extern int wndW, wndH;
@@ -109,7 +110,7 @@ extern long long argumentParser(int argc, char** argv, int* exitReq, int inputNu
 extern HWND getWindow(void);
 
 //getFrame.c
-extern void initGetFrame(HWND inputWindow);
+extern void initGetFrame(void);
 extern void refreshWinSize(void);
 extern void getFrame(Frame* frame);
 
@@ -122,6 +123,7 @@ extern void processFrame(Frame* frame);
 extern void initDrawFrame(void);
 extern void refreshConSize(void);
 extern void drawFrame(Frame* frame);
+extern void restoreConsoleMode();
 
 //conInput.c
 extern void initConInput(void);
@@ -139,6 +141,7 @@ extern void setDefaultColor(void);
 extern void setCursorPos(HANDLE outputHandle, int x, int y);
 extern size_t getOutputArraySize(void);
 extern uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b);
+extern void w2cExit(int code);
 extern void error(const char* description, const char* fileName, int line);
 
 #ifndef _WIN32

@@ -1,5 +1,6 @@
 #include "win2con.h"
 
+HWND hwnd = NULL;
 int imgW = -1, imgH = -1;
 int conW = -1, conH = -1;
 int wndW = -1, wndH = -1;
@@ -17,21 +18,21 @@ int charsetSize = 0;
 double fontRatio = 1.0, constFontRatio = 0.0;
 int disableKeyboard = 0, disableCLS = 0, ignoreDPI = 0;
 
-void init(HWND inputWindow)
+void init(void)
 {
-	initConInput();
-	if (!inputWindow)
+	if (!hwnd)
 	{
 		setDefaultColor();
-		inputWindow = getWindow();
-		if (!inputWindow) { return; }
+		hwnd = getWindow();
+		if (!hwnd) { return; }
 	}
 
 	puts("Loading...");
 
-	initGetFrame(inputWindow);
+	initGetFrame();
 	initProcessFrame();
 	initDrawFrame();
+	initConInput();
 }
 
 void loop(void)
@@ -61,12 +62,12 @@ void loop(void)
 int main(int argc, char** argv)
 {
 	int exitReq = 0;
-	HWND inputWindow = (HWND)argumentParser(argc - 1, argv + 1, &exitReq, 16);
-	if (exitReq) { exit(0); }
+	hwnd = (HWND)argumentParser(argc - 1, argv + 1, &exitReq, 16);
+	if (exitReq) { w2cExit(0); }
 
-	init(inputWindow);
+	init();
 	loop();
 
-	setDefaultColor();
+	w2cExit(0);
 	return 0;
 }
