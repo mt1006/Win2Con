@@ -57,7 +57,10 @@ void refreshConSize(void)
 	getConsoleInfo(&consoleInfo);
 
 	int newW = lastW, newH = lastH;
-	double newFR = consoleInfo.fontRatio;
+	double newFR;
+
+	if (constFontRatio == 0.0) { newFR = consoleInfo.fontRatio; }
+	else { newFR = constFontRatio; }
 
 	if (argW != -1 && argH != -1)
 	{
@@ -67,20 +70,61 @@ void refreshConSize(void)
 			argH = consoleInfo.conH;
 		}
 
-		if (firstCall)
+		if (scalingMode != SM_FILL || !scaleWithRatio)
 		{
-			newW = argW;
-			newH = argH;
+			if (firstCall)
+			{
+				newW = argW;
+				newH = argH;
+			}
+		}
+		else if (fontRatio != newFR)
+		{
+			double wndRatio = (double)wndW / (double)wndH;
+			double conRatio = ((double)argW / (double)argH) * fontRatio;
+
+			if (wndRatio > conRatio)
+			{
+				newW = argW;
+				newH = (int)((conRatio / wndRatio) * argH);
+			}
+			else
+			{
+				newW = (int)((wndRatio / conRatio) * argW);
+				newH = argH;
+			}
 		}
 	}
 	else
 	{
-		if (conW != consoleInfo.conW || conH != consoleInfo.conH)
+		if (scalingMode != SM_FILL || !scaleWithRatio)
+		{
+			if (conW != consoleInfo.conW || conH != consoleInfo.conH)
+			{
+				conW = consoleInfo.conW;
+				conH = consoleInfo.conH;
+				newW = consoleInfo.conW;
+				newH = consoleInfo.conH;
+			}
+		}
+		else if (conW != consoleInfo.conW || conH != consoleInfo.conH ||
+			fontRatio != newFR)
 		{
 			conW = consoleInfo.conW;
 			conH = consoleInfo.conH;
-			newW = consoleInfo.conW;
-			newH = consoleInfo.conH;
+
+			double wndRatio = (double)wndW / (double)wndH;
+			double conRatio = ((double)conW / (double)conH) * fontRatio;
+			if (wndRatio > conRatio)
+			{
+				newW = conW;
+				newH = (int)((conRatio / wndRatio) * conH);
+			}
+			else
+			{
+				newW = (int)((wndRatio / conRatio) * conW);
+				newH = conH;
+			}
 		}
 	}
 

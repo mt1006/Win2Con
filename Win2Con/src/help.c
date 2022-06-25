@@ -114,6 +114,7 @@ static void helpAdvancedOptions(void)
 		"                     Examples:\n"
 		"                      win2con -c cstd-gray -s 80 60 -fr 1.0 -ds -dcls > output.txt\n"
 		" -dk (--disable-keys)Disables keyboard control.\n"
+		" -idpi (--ignore-dpi)Ignores DPI.\n"
 		" -fi (--full-info)   Full info about Win2Con.\n");
 }
 
@@ -137,12 +138,13 @@ static void helpScalingModes(void)
 		" >int <keep-ratio>\n"
 		" >int-fraction <keep-ratio>\n"
 		" >const [x] [y]\n"
-		" >no-scaling\n");
+		" >no-scaling <keep-ratio>\n");
 }
 
 static void helpKeyboard(void)
 {
 	puts(
-		"Keyboard control:\n"
-		" ESC - Exit\n");
+		"Keyboard control [Left Alt + ...]:\n"
+		" ESC - Exit from window\n"
+		" X - Exit from Win2Con\n");
 }
