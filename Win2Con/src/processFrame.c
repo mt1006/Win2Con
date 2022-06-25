@@ -257,7 +257,7 @@ void processFrame(Frame* frame)
 
 			if (scalingMode == SM_FILL)
 			{
-				wndJ = j * wndW / conW;
+				wndJ = j * wndW / imgW;
 			}
 			else
 			{
@@ -275,7 +275,7 @@ void processFrame(Frame* frame)
 
 		if (scalingMode == SM_FILL)
 		{
-			wndI = wndH - (i * wndH / conH) - 1;
+			wndI = wndH - (i * wndH / imgH) - 1;
 		}
 		else
 		{

@@ -47,8 +47,8 @@ void loop(void)
 		double curTime = getTime();
 		if (curTime > lastRefresh + SIZE_REFRESH_PERIOD)
 		{
-			refreshConSize();
 			refreshWinSize();
+			refreshConSize();
 			refreshScaling();
 			lastRefresh = curTime;
 		}

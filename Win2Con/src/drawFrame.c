@@ -50,15 +50,12 @@ void refreshConSize(void)
 {
 	static int firstCall = 1;
 	static int setNewSize = 0;
-	static int lastW = 0, lastH = 0;
-	static double lastFR = 0.0;
+	static int lastWndW = 0, lastWndH = 0;
 
 	ConsoleInfo consoleInfo;
 	getConsoleInfo(&consoleInfo);
 
-	int newW = lastW, newH = lastH;
 	double newFR;
-
 	if (constFontRatio == 0.0) { newFR = consoleInfo.fontRatio; }
 	else { newFR = constFontRatio; }
 
@@ -72,26 +69,32 @@ void refreshConSize(void)
 
 		if (scalingMode != SM_FILL || !scaleWithRatio)
 		{
+			fontRatio = newFR;
 			if (firstCall)
 			{
-				newW = argW;
-				newH = argH;
+				imgW = argW;
+				imgH = argH;
 			}
 		}
-		else if (fontRatio != newFR)
+		else if (lastWndW != wndW || lastWndH != wndH ||
+			fontRatio != newFR)
 		{
+			lastWndW = wndW;
+			lastWndH = wndH;
+			fontRatio = newFR;
+
 			double wndRatio = (double)wndW / (double)wndH;
 			double conRatio = ((double)argW / (double)argH) * fontRatio;
 
 			if (wndRatio > conRatio)
 			{
-				newW = argW;
-				newH = (int)((conRatio / wndRatio) * argH);
+				imgW = argW;
+				imgH = (int)((conRatio / wndRatio) * argH);
 			}
 			else
 			{
-				newW = (int)((wndRatio / conRatio) * argW);
-				newH = argH;
+				imgW = (int)((wndRatio / conRatio) * argW);
+				imgH = argH;
 			}
 		}
 	}
@@ -99,17 +102,23 @@ void refreshConSize(void)
 	{
 		if (scalingMode != SM_FILL || !scaleWithRatio)
 		{
+			fontRatio = newFR;
 			if (conW != consoleInfo.conW || conH != consoleInfo.conH)
 			{
 				conW = consoleInfo.conW;
 				conH = consoleInfo.conH;
-				newW = consoleInfo.conW;
-				newH = consoleInfo.conH;
+				imgW = consoleInfo.conW;
+				imgH = consoleInfo.conH;
 			}
 		}
 		else if (conW != consoleInfo.conW || conH != consoleInfo.conH ||
+			lastWndW != wndW || lastWndH != wndH ||
 			fontRatio != newFR)
 		{
+			lastWndW = wndW;
+			lastWndH = wndH;
+			fontRatio = newFR;
+
 			conW = consoleInfo.conW;
 			conH = consoleInfo.conH;
 
@@ -117,46 +126,18 @@ void refreshConSize(void)
 			double conRatio = ((double)conW / (double)conH) * fontRatio;
 			if (wndRatio > conRatio)
 			{
-				newW = conW;
-				newH = (int)((conRatio / wndRatio) * conH);
+				imgW = conW;
+				imgH = (int)((conRatio / wndRatio) * conH);
 			}
 			else
 			{
-				newW = (int)((wndRatio / conRatio) * conW);
-				newH = conH;
+				imgW = (int)((wndRatio / conRatio) * conW);
+				imgH = conH;
 			}
 		}
 	}
 
-	if (firstCall)
-	{
-		imgW = newW;
-		imgH = newH;
-		fontRatio = newFR;
-		lastW = imgW;
-		lastH = imgH;
-		lastFR = fontRatio;
-		firstCall = 0;
-	}
-	else
-	{
-		if (newW != lastW ||
-			newH != lastH ||
-			newFR != lastFR)
-		{
-			lastW = newW;
-			lastH = newH;
-			lastFR = newFR;
-			setNewSize = 1;
-		}
-		else if (setNewSize)
-		{
-			imgW = newW;
-			imgH = newH;
-			fontRatio = newFR;
-			setNewSize = 0;
-		}
-	}
+	if (firstCall) { firstCall = 0; }
 }
 
 void drawFrame(Frame* frame)
