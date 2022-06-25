@@ -17,14 +17,16 @@ char* charset = NULL;
 int charsetSize = 0;
 double fontRatio = 1.0, constFontRatio = 0.0;
 int disableKeyboard = 0, disableCLS = 0, ignoreDPI = 0;
+int reEnterHWND = 0;
 
 void init(void)
 {
+	setDefaultColor();
+
 	if (!hwnd)
 	{
-		setDefaultColor();
 		hwnd = getWindow();
-		if (!hwnd) { return; }
+		if (!IsWindow(hwnd)) { error("Invalid window!", "main.c", __LINE__); }
 	}
 
 	puts("Loading...");
@@ -44,6 +46,14 @@ void loop(void)
 
 	while (1)
 	{
+		if (reEnterHWND)
+		{
+			setDefaultColor();
+			hwnd = getWindow();
+			if (!IsWindow(hwnd)) { error("Invalid window!", "main.c", __LINE__); }
+			reEnterHWND = 0;
+		}
+
 		double curTime = getTime();
 		if (curTime > lastRefresh + SIZE_REFRESH_PERIOD)
 		{

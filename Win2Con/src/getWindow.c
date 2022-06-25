@@ -47,9 +47,18 @@ HWND getWindow(void)
 		}
 		else if (selection == currentPos + 1)
 		{
-			continue;
+			char inputStr[W2C_MAX_INPUT_LEN];
+			fputs(">", stdout);
+			fgets(inputStr, W2C_MAX_INPUT_LEN, stdin);
+			selectedHWND = (HWND)strtoll(inputStr, NULL, 16);
+			if (selectedHWND == NULL) { continue; }
+			break;
 		}
 		else if (selection == currentPos + 2)
+		{
+			continue;
+		}
+		else if (selection == currentPos + 3)
 		{
 			w2cExit(0);
 		}
@@ -59,6 +68,7 @@ HWND getWindow(void)
 	}
 
 	free(hwndArray);
+	clearScreen(consoleHandle);
 	return selectedHWND;
 }
 
@@ -88,9 +98,10 @@ static void printWindowList(int full, HWND parent)
 
 	if (full) { printf("%d. (Show list of visible)\n", currentPos); }
 	else { printf("%d. (Show full list)\n", currentPos); }
-	
-	printf("%d. (Refresh)\n", currentPos + 1);
-	printf("%d. (Exit)\n", currentPos + 2);
+
+	printf("%d. (From handle)\n", currentPos + 1);
+	printf("%d. (Refresh)\n", currentPos + 2);
+	printf("%d. (Exit)\n", currentPos + 3);
 }
 
 static int printWindowInfo(HWND hwnd, int pos)

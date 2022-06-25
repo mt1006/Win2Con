@@ -46,6 +46,8 @@ void getFrame(Frame* frame)
 
 	PrintWindow(hwnd, hdc, pwMode);
 	frame->bitmapArray = bitmapArray;
+
+	if (!IsWindow(hwnd)) { reEnterHWND = 1; }
 }
 
 static uint8_t* setBitmap(int w, int h)

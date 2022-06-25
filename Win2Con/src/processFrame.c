@@ -29,53 +29,57 @@ void refreshScaling(void)
 
 	switch (scalingMode)
 	{
-	case SM_INT_FRACTION:
-		if (scaleWithRatio)
-		{
-
-		}
-		else
-		{
-			if (conW >= wndW)
-			{
-				scaleXMul = conW / wndW;
-				scaleXDiv = 1;
-			}
-			else
-			{
-				scaleXMul = 1;
-				scaleXDiv = (wndW / conW) + 1;
-			}
-
-			if (conH >= wndH)
-			{
-				scaleYMul = conH / wndH;
-				scaleYDiv = 1;
-			}
-			else
-			{
-				scaleYMul = 1;
-				scaleYDiv = (wndH / conH) + 1;
-			}
-		}
-		break;
-
 	case SM_INT:
+		if (conW >= wndW) { scaleXMul = conW / wndW; }
+		else { scaleXMul = 1; }
+
+		if (conH >= wndH) { scaleYMul = conH / wndH; }
+		else { scaleYMul = 1; }
+
 		if (scaleWithRatio)
 		{
+			double wndRatio = (double)wndW / (double)wndH;
+			double imgRatio = (wndRatio * fontRatio) *
+				((double)scaleXMul / (double)scaleYMul);
 
-		}
-		else
-		{
-			if (conW >= wndW) { scaleXMul = conW / wndW; }
-			else { scaleXMul = 1; }
-
-			if (conH >= wndH) { scaleYMul = conH / wndH; }
-			else { scaleYMul = 1; }
+			if (imgRatio > wndRatio)
+			{
+				scaleXMul = (int)round((double)scaleXMul * (wndRatio / imgRatio));
+				if (scaleXMul < 1) { scaleXMul = 1; }
+			}
+			else
+			{
+				scaleYMul = (int)round((double)scaleYMul * (imgRatio / wndRatio));
+				if (scaleYMul < 1) { scaleYMul = 1; }
+			}
 		}
 
 		scaleXDiv = 1;
 		scaleYDiv = 1;
+		break;
+
+	case SM_INT_FRACTION:
+		if (conW >= wndW)
+		{
+			scaleXMul = conW / wndW;
+			scaleXDiv = 1;
+		}
+		else
+		{
+			scaleXMul = 1;
+			scaleXDiv = (wndW / conW) + 1;
+		}
+
+		if (conH >= wndH)
+		{
+			scaleYMul = conH / wndH;
+			scaleYDiv = 1;
+		}
+		else
+		{
+			scaleYMul = 1;
+			scaleYDiv = (wndH / conH) + 1;
+		}
 		break;
 
 	case SM_NO_SCALING:
@@ -300,9 +304,10 @@ static void processForWinAPI(Frame* frame)
 	#ifdef _WIN32
 	CHAR_INFO* output = (CHAR_INFO*)frame->output;
 
-	int wndI = wndH - 1;
+	int wndI = wndH - 1, wndIMul = 0;
 	for (int i = 0; i < imgH; i++)
 	{
+		int wndJ = 0, wndJMul = 0;
 		for (int j = 0; j < imgW; j++)
 		{
 			if (j >= wndW || i >= wndH)
@@ -312,9 +317,9 @@ static void processForWinAPI(Frame* frame)
 				continue;
 			}
 
-			uint8_t valR = frame->bitmapArray[((wndI * wndW) + j) * 4 + 2];
-			uint8_t valG = frame->bitmapArray[((wndI * wndW) + j) * 4 + 1];
-			uint8_t valB = frame->bitmapArray[((wndI * wndW) + j) * 4];
+			uint8_t valR = frame->bitmapArray[((wndI * wndW) + wndJ) * 4 + 2];
+			uint8_t valG = frame->bitmapArray[((wndI * wndW) + wndJ) * 4 + 1];
+			uint8_t valB = frame->bitmapArray[((wndI * wndW) + wndJ) * 4];
 
 			uint8_t val;
 
@@ -330,9 +335,35 @@ static void processForWinAPI(Frame* frame)
 			}
 
 			output[(i * imgW) + j].Char.AsciiChar = charset[(val * charsetSize) / 256];
+
+			if (scalingMode == SM_FILL)
+			{
+				wndJ = j * wndW / imgW;
+			}
+			else
+			{
+				wndJMul++;
+				if (wndJMul == scaleXMul)
+				{
+					wndJ += scaleXDiv;
+					wndJMul = 0;
+				}
+			}
 		}
 
-		wndI--;
+		if (scalingMode == SM_FILL)
+		{
+			wndI = wndH - (i * wndH / imgH) - 1;
+		}
+		else
+		{
+			wndIMul++;
+			if (wndIMul == scaleYMul)
+			{
+				wndI -= scaleYDiv;
+				wndIMul = 0;
+			}
+		}
 	}
 	#endif
 }

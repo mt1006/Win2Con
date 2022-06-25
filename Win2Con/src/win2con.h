@@ -102,6 +102,7 @@ extern char* charset;
 extern int charsetSize;
 extern double fontRatio, constFontRatio;
 extern int disableKeyboard, disableCLS, ignoreDPI;
+extern int reEnterHWND;
 
 //argParser.c
 extern long long argumentParser(int argc, char** argv, int* exitReq, int inputNumBase);
