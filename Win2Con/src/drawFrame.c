@@ -32,15 +32,19 @@ void initDrawFrame(void)
 		oldOutputMode = mode;
 		mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 		SetConsoleMode(outputHandle, mode);
+		ansiEnabled = 1;
 		outputModeChanged = 1;
 	}
 
-	GetConsoleMode(inputHandle, &mode);
-	oldInputMode = mode;
-	mode &= ~ENABLE_QUICK_EDIT_MODE;
-	mode |= ENABLE_MOUSE_INPUT;
-	SetConsoleMode(inputHandle, mode);
-	inputModeChanged = 1;
+	if (enableInput)
+	{
+		GetConsoleMode(inputHandle, &mode);
+		oldInputMode = mode;
+		mode &= ~ENABLE_QUICK_EDIT_MODE;
+		mode |= ENABLE_MOUSE_INPUT;
+		SetConsoleMode(inputHandle, mode);
+		inputModeChanged = 1;
+	}
 	#endif
 
 	refreshConSize();

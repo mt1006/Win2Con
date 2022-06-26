@@ -21,6 +21,7 @@ static int opColors(int argc, char** argv);
 static int opSize(int argc, char** argv);
 static int opScalingMode(int argc, char** argv);
 static int opClientArea(int argc, char** argv);
+static int opTopMost(int argc, char** argv);
 static int opInformation(int argc, char** argv);
 static int opVersion(int argc, char** argv);
 static int opInterlaced(int argc, char** argv);
@@ -28,6 +29,7 @@ static int opCharset(int argc, char** argv);
 static int opFontRatio(int argc, char** argv);
 static int opDisableCLS(int argc, char** argv);
 static int opDisableKeys(int argc, char** argv);
+static int opEnableInput(int argc, char** argv);
 static int opIgnoreDPI(int argc, char** argv);
 static int opFullInfo(int argc, char** argv);
 static void invalidSyntax(int line);
@@ -39,6 +41,7 @@ const Option OPTIONS[] = {
 	{"-s","--size",&opSize,0},
 	{"-sm","--scaling-mode",&opScalingMode,0},
 	{"-ca","--client-area",&opClientArea,0},
+	{"-tm","--top-most",&opTopMost,0},
 	{"-inf","--information",&opInformation,1},
 	{"-v","--version",&opVersion,1},
 	{"-int","--interlaced",&opInterlaced,0},
@@ -46,6 +49,7 @@ const Option OPTIONS[] = {
 	{"-fr","--font-ratio",&opFontRatio,0},
 	{"-dcls","--disable-cls",&opDisableCLS,0},
 	{"-dk","--disable-keys",&opDisableKeys,0},
+	{"-ei","--enable-input",&opEnableInput,0},
 	{"-idpi","--ignore-dpi",&opIgnoreDPI,0},
 	{"-fi","--full-info",&opFullInfo,1} };
 
@@ -223,7 +227,7 @@ static int opScalingMode(int argc, char** argv)
 
 		return 3;
 	}
-	else if (argc > 1 && argv[1][0] != '-')
+	else if (argc > 1 && argv[1][0] != '-' && scalingMode != SM_INT_FRACTION)
 	{
 		scaleWithRatio = atoi(argv[1]);
 		if (scaleWithRatio != 0 && scaleWithRatio != 1)
@@ -240,6 +244,12 @@ static int opScalingMode(int argc, char** argv)
 static int opClientArea(int argc, char** argv)
 {
 	pwClientArea = 1;
+	return 0;
+}
+
+static int opTopMost(int argc, char** argv)
+{
+	setConsoleTopMost(1);
 	return 0;
 }
 
@@ -353,6 +363,12 @@ static int opDisableCLS(int argc, char** argv)
 static int opDisableKeys(int argc, char** argv)
 {
 	disableKeyboard = 1;
+	return 0;
+}
+
+static int opEnableInput(int argc, char** argv)
+{
+	enableInput = 1;
 	return 0;
 }
 

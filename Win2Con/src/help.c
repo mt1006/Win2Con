@@ -78,6 +78,9 @@ static void helpBasicOptions(void)
 		"                      win2con -sm no-scaling\n"
 		" -ca (--client-area) Gets only window client area (without title bar or menu).\n"
 		"                     It may not work properly in some cases!\n"
+		" -tm (--top-most)    Places console window above all other windows\n"
+		"                     and makes it transparent to input.\n"
+		"                     Doesn't work with Windows Terminal!\n"
 		" -inf(--information) Information about Win2Con.\n"
 		" -v  (--version)     Information about Win2Con version.\n"
 		" -h <topic>          Displays help message.\n"
@@ -114,6 +117,8 @@ static void helpAdvancedOptions(void)
 		"                     Examples:\n"
 		"                      win2con -c cstd-gray -s 80 60 -fr 1.0 -ds -dcls > output.txt\n"
 		" -dk (--disable-keys)Disables keyboard control.\n"
+		" -ei (--enable-input)Enables sending input from console to window.\n"
+		"                     Doesn't work properly! Use \"-tm\" instead."
 		" -idpi (--ignore-dpi)Ignores DPI.\n"
 		" -fi (--full-info)   Full info about Win2Con.\n");
 }
@@ -136,7 +141,7 @@ static void helpScalingModes(void)
 		"Scaling modes:\n"
 		" >fill <keep-ratio> (default with enabled keeping ratio)\n"
 		" >int <keep-ratio>\n"
-		" >int-fraction <keep-ratio>\n"
+		" >int-fraction\n"
 		" >const [x] [y]\n"
 		" >no-scaling <keep-ratio>\n");
 }
@@ -144,7 +149,9 @@ static void helpScalingModes(void)
 static void helpKeyboard(void)
 {
 	puts(
-		"Keyboard control [Left Alt + ...]:\n"
-		" ESC - Exit from window\n"
-		" X - Exit from Win2Con\n");
+		"Keyboard control [Right Alt + ...]:\n"
+		" Q - Exit from window\n"
+		" X - Exit from Win2Con\n"
+		" C - Switch: entire window/client area\n"
+		" T - Switch: console window above all other windows\n");
 }

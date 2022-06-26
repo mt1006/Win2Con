@@ -17,7 +17,9 @@ char* charset = NULL;
 int charsetSize = 0;
 double fontRatio = 1.0, constFontRatio = 0.0;
 int disableKeyboard = 0, disableCLS = 0, ignoreDPI = 0;
+int enableInput = 0;
 int reEnterHWND = 0;
+int ansiEnabled = 0;
 
 void init(void)
 {

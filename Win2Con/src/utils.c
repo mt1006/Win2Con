@@ -54,11 +54,41 @@ void clearScreen(HANDLE outputHandle)
 
 void setDefaultColor(void)
 {
-	if (colorMode == CM_CSTD_16 ||
-		colorMode == CM_CSTD_256 ||
-		colorMode == CM_CSTD_RGB)
+	if (ansiEnabled)
 	{
 		fputs("\x1B[39m", stdout);
+	}
+}
+
+void setConsoleTopMost(int topMost)
+{
+	static HWND conHWND = NULL;
+	static int isTopMost = 0;
+	if (!conHWND) { conHWND = GetConsoleWindow(); }
+
+	if (topMost == -1) { topMost = !isTopMost; }
+
+	if (topMost && !isTopMost)
+	{
+		SetWindowPos(conHWND, HWND_TOPMOST,
+			0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+
+		LONG exStyle = GetWindowLongA(conHWND, GWL_EXSTYLE);
+		exStyle |= WS_EX_TRANSPARENT;
+		SetWindowLongPtr(conHWND, GWL_EXSTYLE, exStyle);
+
+		isTopMost = 1;
+	}
+	else if (!topMost && isTopMost)
+	{
+		SetWindowPos(conHWND, HWND_NOTOPMOST,
+			0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+
+		LONG exStyle = GetWindowLongA(conHWND, GWL_EXSTYLE);
+		exStyle &= ~WS_EX_TRANSPARENT;
+		SetWindowLongPtr(conHWND, GWL_EXSTYLE, exStyle);
+
+		isTopMost = 0;
 	}
 }
 
@@ -117,8 +147,9 @@ uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b)
 
 void w2cExit(int code)
 {
-	restoreConsoleMode();
+	setConsoleTopMost(0);
 	setDefaultColor();
+	restoreConsoleMode();
 	exit(code);
 }
 

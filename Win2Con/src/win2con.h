@@ -1,6 +1,6 @@
 /*
 * Project: Win2Con
-* Version: 0.1
+* Version: 1.0
 * Author: https://github.com/mt1006
 */
 
@@ -43,7 +43,7 @@
 #define W2C_CPU "[unknown]"
 #endif
 
-#define W2C_VERSION "0.1"
+#define W2C_VERSION "1.0"
 #define TO_STR(x) #x
 #define DEF_TO_STR(x) TO_STR(x)
 
@@ -102,7 +102,9 @@ extern char* charset;
 extern int charsetSize;
 extern double fontRatio, constFontRatio;
 extern int disableKeyboard, disableCLS, ignoreDPI;
+extern int enableInput;
 extern int reEnterHWND;
+extern int ansiEnabled;
 
 //argParser.c
 extern long long argumentParser(int argc, char** argv, int* exitReq, int inputNumBase);
@@ -139,6 +141,7 @@ extern void showVersion(void);
 extern double getTime(void);
 extern void clearScreen(HANDLE outputHandle);
 extern void setDefaultColor(void);
+extern void setConsoleTopMost(int topMost);
 extern void setCursorPos(HANDLE outputHandle, int x, int y);
 extern size_t getOutputArraySize(void);
 extern uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b);
