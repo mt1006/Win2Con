@@ -1,6 +1,8 @@
 # Win2Con
 Displays windows and allows you to use them in console.
 
+[Download Version 1.0](https://github.com/mt1006/Win2Con/releases/tag/Win2Con-1.0)
+
 # Examples
 
 Minecraft in cmd [```-ca -tm```]
