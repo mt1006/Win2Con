@@ -78,6 +78,14 @@ typedef enum
 	SM_NO_SCALING
 } ScalingMode;
 
+typedef enum
+{
+	SCM_DISABLED,
+	SCM_WINAPI,
+	SCM_CSTD_256,
+	SCM_CSTD_RGB
+} SetColorMode;
+
 typedef struct
 {
 	uint8_t* bitmapArray;
@@ -86,6 +94,7 @@ typedef struct
 } Frame;
 
 extern HWND hwnd;
+extern HANDLE outputHandle;
 extern int imgW, imgH;
 extern int conW, conH;
 extern int wndW, wndH;
@@ -105,6 +114,8 @@ extern int disableKeyboard, disableCLS, ignoreDPI;
 extern int enableInput;
 extern int reEnterHWND;
 extern int ansiEnabled;
+extern SetColorMode setColorMode;
+extern int setColorVal;
 
 //argParser.c
 extern long long argumentParser(int argc, char** argv, int* exitReq, int inputNumBase);
@@ -139,10 +150,11 @@ extern void showVersion(void);
 
 //utils.c
 extern double getTime(void);
-extern void clearScreen(HANDLE outputHandle);
+extern void strToLower(char* str);
+extern void clearScreen(void);
 extern void setDefaultColor(void);
 extern void setConsoleTopMost(int topMost);
-extern void setCursorPos(HANDLE outputHandle, int x, int y);
+extern void setCursorPos(int x, int y);
 extern size_t getOutputArraySize(void);
 extern uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b);
 extern void w2cExit(int code);

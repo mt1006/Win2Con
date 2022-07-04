@@ -1,6 +1,7 @@
 #include "win2con.h"
 
 HWND hwnd = NULL;
+HANDLE outputHandle = NULL;
 int imgW = -1, imgH = -1;
 int conW = -1, conH = -1;
 int wndW = -1, wndH = -1;
@@ -20,10 +21,13 @@ int disableKeyboard = 0, disableCLS = 0, ignoreDPI = 0;
 int enableInput = 0;
 int reEnterHWND = 0;
 int ansiEnabled = 0;
+SetColorMode setColorMode = SCM_DISABLED;
+int setColorVal = 0;
 
 void init(void)
 {
 	setDefaultColor();
+	outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
 	if (!hwnd)
 	{

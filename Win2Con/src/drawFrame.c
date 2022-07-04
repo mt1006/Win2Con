@@ -8,7 +8,6 @@ typedef struct
 } ConsoleInfo;
 
 static HWND conHWND = NULL;
-static HANDLE outputHandle = NULL;
 static HANDLE inputHandle = NULL;
 static DWORD oldOutputMode, oldInputMode;
 static int outputModeChanged = 0, inputModeChanged = 0;
@@ -20,13 +19,14 @@ void initDrawFrame(void)
 {
 	#ifdef _WIN32
 	conHWND = GetConsoleWindow();
-	outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 	inputHandle = GetStdHandle(STD_INPUT_HANDLE);
 
 	DWORD mode;
 	if (colorMode == CM_CSTD_16 ||
 		colorMode == CM_CSTD_256 ||
-		colorMode == CM_CSTD_RGB)
+		colorMode == CM_CSTD_RGB ||
+		setColorMode == SCM_CSTD_256 ||
+		setColorMode == SCM_CSTD_RGB)
 	{
 		GetConsoleMode(outputHandle, &mode);
 		oldOutputMode = mode;
@@ -46,6 +46,26 @@ void initDrawFrame(void)
 		inputModeChanged = 1;
 	}
 	#endif
+
+	switch (setColorMode)
+	{
+	case SCM_WINAPI:
+		#ifdef _WIN32
+		SetConsoleTextAttribute(outputHandle, (WORD)setColorVal);
+		#endif
+		break;
+
+	case SCM_CSTD_256:
+		printf("\x1B[38;5;%dm", setColorVal);
+		break;
+
+	case SCM_CSTD_RGB:
+		printf("\x1B[38;2;%d;%d;%dm",
+			(setColorVal & 0xFF0000) >> 16,
+			(setColorVal & 0x00FF00) >> 8,
+			setColorVal & 0x0000FF);
+		break;
+	}
 
 	refreshConSize();
 }
@@ -152,7 +172,7 @@ void drawFrame(Frame* frame)
 	{
 		lastW = imgW;
 		lastH = imgH;
-		clearScreen(outputHandle);
+		clearScreen();
 	}
 
 	if (colorMode == CM_WINAPI_GRAY || colorMode == CM_WINAPI_16)
@@ -166,7 +186,7 @@ void drawFrame(Frame* frame)
 
 	if (scanlineCount == 1)
 	{
-		if (!disableCLS) { setCursorPos(outputHandle, 0, 0); }
+		if (!disableCLS) { setCursorPos(0, 0); }
 		fwrite(output, 1, lineOffsets[imgH], stdout);
 	}
 	else
@@ -178,7 +198,7 @@ void drawFrame(Frame* frame)
 			if (sy >= imgH) { break; }
 			else if (sy + sh > imgH) { sh = imgH - sy; }
 
-			if (!disableCLS) { setCursorPos(outputHandle, 0, sy); }
+			if (!disableCLS) { setCursorPos(0, sy); }
 			fwrite(output + lineOffsets[sy], 1, lineOffsets[sy + sh] - lineOffsets[sy], stdout);
 		}
 

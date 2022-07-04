@@ -15,7 +15,15 @@ double getTime(void)
 	#endif
 }
 
-void clearScreen(HANDLE outputHandle)
+void strToLower(char* str)
+{
+	for (int i = 0; i < strlen(str); i++)
+	{
+		str[i] = (char)tolower((int)str[i]);
+	}
+}
+
+void clearScreen(void)
 {
 	#ifdef _WIN32
 
@@ -92,7 +100,7 @@ void setConsoleTopMost(int topMost)
 	}
 }
 
-void setCursorPos(HANDLE outputHandle, int x, int y)
+void setCursorPos(int x, int y)
 {
 	#ifdef _WIN32
 

@@ -23,13 +23,12 @@ static void freeParsedArgs(char** argv);
 HWND getWindow(void)
 {
 	HWND selectedHWND = NULL;
-	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 	hwndArray = (HWND*)malloc(W2C_MAX_WND_COUNT * sizeof(HWND));
 
 	int fullList = 0;
 	while (1)
 	{
-		clearScreen(consoleHandle);
+		clearScreen();
 		puts("Select window:\n");
 		printWindowList(fullList, NULL);
 
@@ -68,7 +67,7 @@ HWND getWindow(void)
 	}
 
 	free(hwndArray);
-	clearScreen(consoleHandle);
+	clearScreen();
 	return selectedHWND;
 }
 

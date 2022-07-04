@@ -331,7 +331,15 @@ static void processForWinAPI(Frame* frame)
 			else
 			{
 				val = procColor(&valR, &valG, &valB, 0);
-				output[(i * imgW) + j].Attributes = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+				if (setColorMode == SCM_WINAPI)
+				{
+					output[(i * imgW) + j].Attributes = setColorVal;
+				}
+				else
+				{
+					output[(i * imgW) + j].Attributes =
+						FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+				}
 			}
 
 			output[(i * imgW) + j].Char.AsciiChar = charset[(val * charsetSize) / 256];

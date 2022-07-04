@@ -26,6 +26,7 @@ static int opInformation(int argc, char** argv);
 static int opVersion(int argc, char** argv);
 static int opInterlaced(int argc, char** argv);
 static int opCharset(int argc, char** argv);
+static int opSetColor(int argc, char** argv);
 static int opFontRatio(int argc, char** argv);
 static int opDisableCLS(int argc, char** argv);
 static int opDisableKeys(int argc, char** argv);
@@ -46,6 +47,7 @@ const Option OPTIONS[] = {
 	{"-v","--version",&opVersion,1},
 	{"-int","--interlaced",&opInterlaced,0},
 	{"-cs","--charset",&opCharset,0},
+	{"-sc","--set-color",&opSetColor,0},
 	{"-fr","--font-ratio",&opFontRatio,0},
 	{"-dcls","--disable-cls",&opDisableCLS,0},
 	{"-dk","--disable-keys",&opDisableKeys,0},
@@ -166,10 +168,7 @@ static int opColors(int argc, char** argv)
 {
 	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
 
-	for (int i = 0; i < strlen(argv[0]); i++)
-	{
-		argv[0][i] = (char)tolower((int)argv[0][i]);
-	}
+	strToLower(argv[0]);
 	if (!strcmp(argv[0], "winapi-gray")) { colorMode = CM_WINAPI_GRAY; }
 	else if (!strcmp(argv[0], "winapi-16")) { colorMode = CM_WINAPI_16; }
 	else if (!strcmp(argv[0], "cstd-gray")) { colorMode = CM_CSTD_GRAY; }
@@ -198,10 +197,7 @@ static int opScalingMode(int argc, char** argv)
 	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
 	scaleWithRatio = 0;
 
-	for (int i = 0; i < strlen(argv[0]); i++)
-	{
-		argv[0][i] = (char)tolower((int)argv[0][i]);
-	}
+	strToLower(argv[0]);
 	if (!strcmp(argv[0], "fill")) { scalingMode = SM_FILL; }
 	else if (!strcmp(argv[0], "int")) { scalingMode = SM_INT; }
 	else if (!strcmp(argv[0], "int-fraction")) { scalingMode = SM_INT_FRACTION; }
@@ -271,10 +267,7 @@ static int opHelp(int argc, char** argv)
 {
 	if (argc == 1 && argv[0][0] != '-')
 	{
-		for (int i = 0; i < strlen(argv[0]); i++)
-		{
-			argv[0][i] = (char)tolower((int)argv[0][i]);
-		}
+		strToLower(argv[0]);
 		if (!strcmp(argv[0], "basic")) { showHelp(1, 0, 0, 0, 0); }
 		else if (!strcmp(argv[0], "advanced")) { showHelp(0, 1, 0, 0, 0); }
 		else if (!strcmp(argv[0], "color-modes")) { showHelp(0, 0, 1, 0, 0); }
@@ -322,10 +315,7 @@ static int opCharset(int argc, char** argv)
 	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
 	if (argv[0][0] == '#')
 	{
-		for (int i = 0; i < strlen(argv[0]); i++)
-		{
-			argv[0][i] = (char)tolower((int)argv[0][i]);
-		}
+		strToLower(argv[0]);
 		if (!strcmp(argv[0], "#long")) { charset = CHARSET_LONG; }
 		else if (!strcmp(argv[0], "#short")) { charset = CHARSET_SHORT; }
 		else if (!strcmp(argv[0], "#2")) { charset = CHARSET_2; }
@@ -343,6 +333,33 @@ static int opCharset(int argc, char** argv)
 		charsetSize = (int)fread(charset, sizeof(char), CHARSET_MAX_SIZE, charsetFile);
 		fclose(charsetFile);
 	}
+	return 1;
+}
+
+static int opSetColor(int argc, char** argv)
+{
+	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
+
+	if (argv[0][0] >= '0' && argv[0][0] <= '9')
+	{
+		setColorMode = SCM_WINAPI;
+		setColorVal = atoi(argv[0]);
+	}
+	else if (argv[0][0] == '$')
+	{
+		setColorMode = SCM_CSTD_256;
+		setColorVal = atoi(argv[0] + 1);
+	}
+	else if (argv[0][0] == '#')
+	{
+		setColorMode = SCM_CSTD_RGB;
+		setColorVal = strtol(argv[0] + 1, NULL, 16);
+	}
+	else
+	{
+		invalidSyntax(__LINE__);
+	}
+
 	return 1;
 }
 
