@@ -7,7 +7,6 @@ typedef struct
 	double fontRatio;
 } ConsoleInfo;
 
-static HWND conHWND = NULL;
 static HANDLE inputHandle = NULL;
 static DWORD oldOutputMode, oldInputMode;
 static int outputModeChanged = 0, inputModeChanged = 0;
@@ -18,7 +17,6 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo);
 void initDrawFrame(void)
 {
 	#ifdef _WIN32
-	conHWND = GetConsoleWindow();
 	inputHandle = GetStdHandle(STD_INPUT_HANDLE);
 
 	DWORD mode;
@@ -246,7 +244,6 @@ static void drawWithWinAPI(Frame* frame)
 static void getConsoleInfo(ConsoleInfo* consoleInfo)
 {
 	const double DEFAULT_FONT_RATIO = 8.0 / 18.0;
-	const int USE_GET_CURRENT_CONSOLE_FONT = 0;
 
 	int fullConW, fullConH;
 	double fontRatio;
@@ -261,7 +258,7 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 	fullConH = consoleBufferInfo.srWindow.Bottom - consoleBufferInfo.srWindow.Top + 1;
 
 	RECT clientRect = { 0 };
-	if (!USE_GET_CURRENT_CONSOLE_FONT) { GetClientRect(conHWND, &clientRect); }
+	GetClientRect(conHWND, &clientRect);
 
 	if (clientRect.bottom == 0 || fullConW == 0 || fullConH == 0)
 	{

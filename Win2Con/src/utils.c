@@ -1,5 +1,9 @@
 #include "win2con.h"
 
+#define W2C_MAX_OLD_TITLE_LEN 1024
+#define W2C_MAX_NEW_TITLE_LEN 128
+#define W2C_WAIT_FOR_SET_TITLE 100
+
 double getTime(void)
 {
 	#ifdef _WIN32
@@ -21,6 +25,42 @@ void strToLower(char* str)
 	{
 		str[i] = (char)tolower((int)str[i]);
 	}
+}
+
+void getConsoleWindow(void)
+{
+	if (conHWND) { return; }
+
+	RECT clientRect;
+	conHWND = GetConsoleWindow();
+	GetClientRect(conHWND, &clientRect);
+
+	if (clientRect.right == 0 || clientRect.bottom == 0)
+	{
+		wchar_t oldConTitle[W2C_MAX_OLD_TITLE_LEN];
+		char newConTitle[W2C_MAX_NEW_TITLE_LEN];
+
+		GetConsoleTitleW(oldConTitle, W2C_MAX_OLD_TITLE_LEN);
+		sprintf(newConTitle, "Win2Con-(%d/%d)",
+			(int)clock(), (int)GetCurrentProcessId());
+		SetConsoleTitleA(newConTitle);
+		Sleep(W2C_WAIT_FOR_SET_TITLE);
+		HWND newConHWND = FindWindowA(NULL, newConTitle);
+		SetConsoleTitleW(oldConTitle);
+
+		if (newConHWND)
+		{
+			conHWND = newConHWND;
+			wtDragBarHWND = FindWindowExW(conHWND, NULL,
+				L"DRAG_BAR_WINDOW_CLASS", NULL);
+			wtInputHWND = FindWindowExW(conHWND, NULL,
+				L"Windows.UI.Composition.DesktopWindowContentBridge", NULL);
+		}
+	}
+	
+	if (!wtInputHWND) { wtInputHWND = conHWND; }
+
+	return conHWND;
 }
 
 void clearScreen(void)
@@ -70,9 +110,8 @@ void setDefaultColor(void)
 
 void setConsoleTopMost(int topMost)
 {
-	static HWND conHWND = NULL;
 	static int isTopMost = 0;
-	if (!conHWND) { conHWND = GetConsoleWindow(); }
+	getConsoleWindow();
 
 	if (topMost == -1) { topMost = !isTopMost; }
 
@@ -81,7 +120,10 @@ void setConsoleTopMost(int topMost)
 		SetWindowPos(conHWND, HWND_TOPMOST,
 			0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
-		LONG exStyle = GetWindowLongA(conHWND, GWL_EXSTYLE);
+		LONG exStyle = GetWindowLongA(wtInputHWND, GWL_EXSTYLE);
+		exStyle |= WS_EX_TRANSPARENT;
+		SetWindowLongPtr(wtInputHWND, GWL_EXSTYLE, exStyle);
+		exStyle = GetWindowLongA(conHWND, GWL_EXSTYLE);
 		exStyle |= WS_EX_TRANSPARENT;
 		SetWindowLongPtr(conHWND, GWL_EXSTYLE, exStyle);
 
@@ -92,7 +134,10 @@ void setConsoleTopMost(int topMost)
 		SetWindowPos(conHWND, HWND_NOTOPMOST,
 			0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
-		LONG exStyle = GetWindowLongA(conHWND, GWL_EXSTYLE);
+		LONG exStyle = GetWindowLongA(wtInputHWND, GWL_EXSTYLE);
+		exStyle &= ~WS_EX_TRANSPARENT;
+		SetWindowLongPtr(wtInputHWND, GWL_EXSTYLE, exStyle);
+		exStyle = GetWindowLongA(conHWND, GWL_EXSTYLE);
 		exStyle &= ~WS_EX_TRANSPARENT;
 		SetWindowLongPtr(conHWND, GWL_EXSTYLE, exStyle);
 

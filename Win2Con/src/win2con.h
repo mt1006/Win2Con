@@ -95,6 +95,7 @@ typedef struct
 
 extern HWND hwnd;
 extern HANDLE outputHandle;
+extern HWND conHWND, wtInputHWND, wtDragBarHWND;
 extern int imgW, imgH;
 extern int conW, conH;
 extern int wndW, wndH;
@@ -151,6 +152,7 @@ extern void showVersion(void);
 //utils.c
 extern double getTime(void);
 extern void strToLower(char* str);
+extern void getConsoleWindow(void);
 extern void clearScreen(void);
 extern void setDefaultColor(void);
 extern void setConsoleTopMost(int topMost);

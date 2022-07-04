@@ -126,7 +126,7 @@ static void helpAdvancedOptions(void)
 		"                      win2con -c cstd-gray -s 80 60 -fr 1.0 -ds -dcls > output.txt\n"
 		" -dk (--disable-keys)Disables keyboard control.\n"
 		" -ei (--enable-input)Enables sending input from console to window.\n"
-		"                     Doesn't work properly! Use \"-tm\" instead."
+		"                     Doesn't work properly! Use \"-tm\" instead.\n"
 		" -idpi (--ignore-dpi)Ignores DPI.\n"
 		" -fi (--full-info)   Full info about Win2Con.\n");
 }
@@ -135,11 +135,11 @@ static void helpColorModes(void)
 {
 	puts(
 		"Color modes:\n"
-		" >winapi-gray (default without \"-c\" on Windows)\n"
+		" >winapi-gray\n"
 		" >winapi-16\n"
-		" >cstd-gray (default without \"-c\" on Linux)\n"
+		" >cstd-gray\n"
 		" >cstd-16\n"
-		" >cstd-256 (defaults to \"-c\")\n"
+		" >cstd-256 (default)\n"
 		" >cstd-rgb\n");
 }
 

@@ -2,6 +2,7 @@
 
 HWND hwnd = NULL;
 HANDLE outputHandle = NULL;
+HWND conHWND = NULL, wtInputHWND = NULL, wtDragBarHWND = NULL;
 int imgW = -1, imgH = -1;
 int conW = -1, conH = -1;
 int wndW = -1, wndH = -1;
@@ -37,6 +38,7 @@ void init(void)
 
 	puts("Loading...");
 
+	getConsoleWindow();
 	initGetFrame();
 	initProcessFrame();
 	initDrawFrame();
