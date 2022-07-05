@@ -279,6 +279,13 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 	}
 	else
 	{
+		if (wtDragBarHWND && IsWindowVisible(wtDragBarHWND))
+		{
+			RECT wtDragBarRect;
+			GetClientRect(wtDragBarHWND, &wtDragBarRect);
+			clientRect.bottom -= wtDragBarRect.bottom;
+		}
+
 		fontRatio = ((double)clientRect.right / (double)fullConW) /
 			((double)clientRect.bottom / (double)fullConH);
 	}

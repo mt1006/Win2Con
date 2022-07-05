@@ -1,1 +1,2 @@
 -Added option to set constant color in grayscale mode.
+-Fix: wrong image ratio in Windows Terminal

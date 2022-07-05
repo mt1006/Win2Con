@@ -53,12 +53,8 @@ void getConsoleWindow(void)
 			conHWND = newConHWND;
 			wtDragBarHWND = FindWindowExW(conHWND, NULL,
 				L"DRAG_BAR_WINDOW_CLASS", NULL);
-			wtInputHWND = FindWindowExW(conHWND, NULL,
-				L"Windows.UI.Composition.DesktopWindowContentBridge", NULL);
 		}
 	}
-	
-	if (!wtInputHWND) { wtInputHWND = conHWND; }
 
 	return conHWND;
 }
@@ -120,12 +116,9 @@ void setConsoleTopMost(int topMost)
 		SetWindowPos(conHWND, HWND_TOPMOST,
 			0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
-		LONG exStyle = GetWindowLongA(wtInputHWND, GWL_EXSTYLE);
+		LONG exStyle = GetWindowLongA(conHWND, GWL_EXSTYLE);
 		exStyle |= WS_EX_TRANSPARENT;
-		SetWindowLongPtr(wtInputHWND, GWL_EXSTYLE, exStyle);
-		exStyle = GetWindowLongA(conHWND, GWL_EXSTYLE);
-		exStyle |= WS_EX_TRANSPARENT;
-		SetWindowLongPtr(conHWND, GWL_EXSTYLE, exStyle);
+		SetWindowLongPtrA(conHWND, GWL_EXSTYLE, exStyle);
 
 		isTopMost = 1;
 	}
@@ -134,12 +127,9 @@ void setConsoleTopMost(int topMost)
 		SetWindowPos(conHWND, HWND_NOTOPMOST,
 			0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
-		LONG exStyle = GetWindowLongA(wtInputHWND, GWL_EXSTYLE);
+		LONG exStyle = GetWindowLongA(conHWND, GWL_EXSTYLE);
 		exStyle &= ~WS_EX_TRANSPARENT;
-		SetWindowLongPtr(wtInputHWND, GWL_EXSTYLE, exStyle);
-		exStyle = GetWindowLongA(conHWND, GWL_EXSTYLE);
-		exStyle &= ~WS_EX_TRANSPARENT;
-		SetWindowLongPtr(conHWND, GWL_EXSTYLE, exStyle);
+		SetWindowLongPtrA(conHWND, GWL_EXSTYLE, exStyle);
 
 		isTopMost = 0;
 	}

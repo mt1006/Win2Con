@@ -95,7 +95,7 @@ typedef struct
 
 extern HWND hwnd;
 extern HANDLE outputHandle;
-extern HWND conHWND, wtInputHWND, wtDragBarHWND;
+extern HWND conHWND, wtDragBarHWND;
 extern int imgW, imgH;
 extern int conW, conH;
 extern int wndW, wndH;

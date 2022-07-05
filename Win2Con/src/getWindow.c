@@ -32,6 +32,7 @@ HWND getWindow(void)
 		puts("Select window:\n");
 		printWindowList(fullList, NULL);
 
+		fflush(stdout);
 		int selection = (int)menuInput(":", 10);
 
 		if (selection > 0 && selection < currentPos)
