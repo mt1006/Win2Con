@@ -56,7 +56,7 @@ void getConsoleWindow(void)
 		}
 	}
 
-	return conHWND;
+	return;
 }
 
 void clearScreen(void)
