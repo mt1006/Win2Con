@@ -55,8 +55,6 @@ void getConsoleWindow(void)
 				L"DRAG_BAR_WINDOW_CLASS", NULL);
 		}
 	}
-
-	return;
 }
 
 void clearScreen(void)
