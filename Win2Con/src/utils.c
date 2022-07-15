@@ -98,7 +98,14 @@ void setDefaultColor(void)
 {
 	if (ansiEnabled)
 	{
-		fputs("\x1B[39m", stdout);
+		fputs("\x1B[0m", stdout);
+	}
+	else if (setColorMode == SCM_WINAPI)
+	{
+		#ifdef _WIN32
+		SetConsoleTextAttribute(outputHandle,
+			FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+		#endif
 	}
 }
 

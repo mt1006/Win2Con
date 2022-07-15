@@ -1,2 +1,3 @@
--Added option to set constant color in grayscale mode.
--Fix: wrong image ratio in Windows Terminal
+-Added option to set constant color in grayscale mode - "--set-color".
+-Added "--single-char" option.
+-Fix: wrong image ratio in Windows Terminal.

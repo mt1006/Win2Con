@@ -47,17 +47,8 @@
 #define TO_STR(x) #x
 #define DEF_TO_STR(x) TO_STR(x)
 
-#ifdef _WIN32
-
 #define W2C_DEFAULT_COLOR_MODE CM_CSTD_256
 #define W2C_DEFAULT_SCALING_MODE SM_FILL
-
-#else
-
-#define W2C_DEFAULT_COLOR_MODE CM_CSTD_256
-#define W2C_DEFAULT_SCALING_MODE SM_FILL
-
-#endif
 
 typedef enum
 {
@@ -116,7 +107,8 @@ extern int enableInput;
 extern int reEnterHWND;
 extern int ansiEnabled;
 extern SetColorMode setColorMode;
-extern int setColorVal;
+extern int setColorVal, setColorVal2;
+extern int singleCharMode;
 
 //argParser.c
 extern long long argumentParser(int argc, char** argv, int* exitReq, int inputNumBase);

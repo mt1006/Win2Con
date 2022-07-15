@@ -160,8 +160,15 @@ void processFrame(Frame* frame)
 
 			uint8_t val, color;
 
-			if (colorMode == CM_CSTD_GRAY) { val = procColor(&valR, &valG, &valB, 0); }
-			else { val = procColor(&valR, &valG, &valB, 1); }
+			if (colorMode == CM_CSTD_GRAY)
+			{
+				val = procColor(&valR, &valG, &valB, 0);
+			}
+			else
+			{
+				if (singleCharMode) { val = 255; }
+				else { val = procColor(&valR, &valG, &valB, 1); }
+			}
 
 			switch (colorMode)
 			{
@@ -325,7 +332,8 @@ static void processForWinAPI(Frame* frame)
 
 			if (colorMode == CM_WINAPI_16)
 			{
-				val = procColor(&valR, &valG, &valB, 1);
+				if (singleCharMode) { val = 255; }
+				else { val = procColor(&valR, &valG, &valB, 1); }
 				output[(i * imgW) + j].Attributes = findNearestColor16(valR, valG, valB);
 			}
 			else

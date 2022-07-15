@@ -23,7 +23,8 @@ int enableInput = 0;
 int reEnterHWND = 0;
 int ansiEnabled = 0;
 SetColorMode setColorMode = SCM_DISABLED;
-int setColorVal = 0;
+int setColorVal = 0, setColorVal2 = -1;
+int singleCharMode = 0;
 
 void init(void)
 {

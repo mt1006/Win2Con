@@ -13,6 +13,7 @@ static int outputModeChanged = 0, inputModeChanged = 0;
 
 static void drawWithWinAPI(Frame* frame);
 static void getConsoleInfo(ConsoleInfo* consoleInfo);
+static void setConstColor(void);
 
 void initDrawFrame(void)
 {
@@ -44,26 +45,6 @@ void initDrawFrame(void)
 		inputModeChanged = 1;
 	}
 	#endif
-
-	switch (setColorMode)
-	{
-	case SCM_WINAPI:
-		#ifdef _WIN32
-		SetConsoleTextAttribute(outputHandle, (WORD)setColorVal);
-		#endif
-		break;
-
-	case SCM_CSTD_256:
-		printf("\x1B[38;5;%dm", setColorVal);
-		break;
-
-	case SCM_CSTD_RGB:
-		printf("\x1B[38;2;%d;%d;%dm",
-			(setColorVal & 0xFF0000) >> 16,
-			(setColorVal & 0x00FF00) >> 8,
-			setColorVal & 0x0000FF);
-		break;
-	}
 
 	refreshConSize();
 }
@@ -178,6 +159,8 @@ void drawFrame(Frame* frame)
 		drawWithWinAPI(frame);
 		return;
 	}
+
+	setConstColor();
 
 	char* output = (char*)frame->output;
 	int* lineOffsets = frame->outputLineOffsets;
@@ -314,4 +297,38 @@ void restoreConsoleMode()
 {
 	if (outputModeChanged) { SetConsoleMode(outputHandle, oldOutputMode); }
 	if (inputModeChanged) { SetConsoleMode(inputHandle, oldInputMode); }
+}
+
+static void setConstColor(void)
+{
+	switch (setColorMode)
+	{
+	case SCM_WINAPI:
+		#ifdef _WIN32
+		SetConsoleTextAttribute(outputHandle, (WORD)setColorVal);
+		#endif
+		break;
+
+	case SCM_CSTD_256:
+		printf("\x1B[38;5;%dm", setColorVal);
+		if (setColorVal2 != -1)
+		{
+			printf("\x1B[48;5;%dm", setColorVal2);
+		}
+		break;
+
+	case SCM_CSTD_RGB:
+		printf("\x1B[38;2;%d;%d;%dm",
+			(setColorVal & 0xFF0000) >> 16,
+			(setColorVal & 0x00FF00) >> 8,
+			setColorVal & 0x0000FF);
+		if (setColorVal2 != -1)
+		{
+			printf("\x1B[48;2;%d;%d;%dm",
+				(setColorVal2 & 0xFF0000) >> 16,
+				(setColorVal2 & 0x00FF00) >> 8,
+				setColorVal2 & 0x0000FF);
+		}
+		break;
+	}
 }
