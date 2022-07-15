@@ -1,6 +1,6 @@
 #include "win2con.h"
 
-static HDC hdc;
+static HDC hdc, screenHDC;
 static uint8_t* bitmapArray = NULL;
 
 static uint8_t* setBitmap(int w, int h);
@@ -8,26 +8,38 @@ static uint8_t* setBitmap(int w, int h);
 void initGetFrame(void)
 {
 	if (!ignoreDPI) { SetProcessDPIAware(); }
-	hdc = CreateCompatibleDC(GetDC(NULL));
+	screenHDC = GetDC(NULL);
+	hdc = CreateCompatibleDC(screenHDC);
 	refreshWinSize();
 }
 
 void refreshWinSize(void)
 {
-	RECT wndRect;
 	int newWndW, newWndH;
 
-	if (pwClientArea)
+	if (magnifierMode)
 	{
-		GetClientRect(hwnd, &wndRect);
+		RECT wndRect;
+		GetClientRect(conHWND, &wndRect);
 		newWndW = wndRect.right;
 		newWndH = wndRect.bottom;
 	}
 	else
 	{
-		GetWindowRect(hwnd, &wndRect);
-		newWndW = wndRect.right - wndRect.left;
-		newWndH = wndRect.bottom - wndRect.top;
+		RECT wndRect;
+
+		if (pwClientArea)
+		{
+			GetClientRect(hwnd, &wndRect);
+			newWndW = wndRect.right;
+			newWndH = wndRect.bottom;
+		}
+		else
+		{
+			GetWindowRect(hwnd, &wndRect);
+			newWndW = wndRect.right - wndRect.left;
+			newWndH = wndRect.bottom - wndRect.top;
+		}
 	}
 
 	if (wndW != newWndW || wndH != newWndH)
@@ -40,14 +52,22 @@ void refreshWinSize(void)
 
 void getFrame(Frame* frame)
 {
-	UINT pwMode;
-	if (pwClientArea) { pwMode = PW_CLIENTONLY; }
-	else { pwMode = PW_RENDERFULLCONTENT; }
+	if (magnifierMode)
+	{
+		BitBlt(hdc, 0, 0, wndW, wndH, screenHDC, 0, 0, SRCCOPY);
+		frame->bitmapArray = bitmapArray;
+	}
+	else
+	{
+		UINT pwMode;
+		if (pwClientArea) { pwMode = PW_CLIENTONLY; }
+		else { pwMode = PW_RENDERFULLCONTENT; }
 
-	PrintWindow(hwnd, hdc, pwMode);
-	frame->bitmapArray = bitmapArray;
+		PrintWindow(hwnd, hdc, pwMode);
+		frame->bitmapArray = bitmapArray;
 
-	if (!IsWindow(hwnd)) { reEnterHWND = 1; }
+		if (!IsWindow(hwnd)) { reEnterHWND = 1; }
+	}
 }
 
 static uint8_t* setBitmap(int w, int h)

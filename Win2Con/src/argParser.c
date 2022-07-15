@@ -23,6 +23,7 @@ static int opSize(int argc, char** argv);
 static int opScalingMode(int argc, char** argv);
 static int opClientArea(int argc, char** argv);
 static int opTopMost(int argc, char** argv);
+static int opLoop(int argc, char** argv);
 static int opInformation(int argc, char** argv);
 static int opVersion(int argc, char** argv);
 static int opInterlaced(int argc, char** argv);
@@ -45,6 +46,7 @@ const Option OPTIONS[] = {
 	{"-sm","--scaling-mode",&opScalingMode,0},
 	{"-ca","--client-area",&opClientArea,0},
 	{"-tm","--top-most",&opTopMost,0},
+	{"-m","--magnifier",&opLoop,0},
 	{"-inf","--information",&opInformation,1},
 	{"-v","--version",&opVersion,1},
 	{"-int","--interlaced",&opInterlaced,0},
@@ -290,6 +292,12 @@ static int opClientArea(int argc, char** argv)
 static int opTopMost(int argc, char** argv)
 {
 	setConsoleTopMost(1);
+	return 0;
+}
+
+static int opLoop(int argc, char** argv)
+{
+	magnifierMode = 1;
 	return 0;
 }
 

@@ -123,7 +123,10 @@ void setConsoleTopMost(int topMost)
 
 		LONG exStyle = GetWindowLongA(conHWND, GWL_EXSTYLE);
 		exStyle |= WS_EX_TRANSPARENT;
+		exStyle |= WS_EX_LAYERED;
 		SetWindowLongPtrA(conHWND, GWL_EXSTYLE, exStyle);
+
+		SetLayeredWindowAttributes(conHWND, 0, 255, LWA_ALPHA);
 
 		isTopMost = 1;
 	}

@@ -14,7 +14,6 @@ int pwClientArea = 0;
 ColorMode colorMode = W2C_DEFAULT_COLOR_MODE;
 ScalingMode scalingMode = W2C_DEFAULT_SCALING_MODE;
 int scanlineCount = 1, scanlineHeight = 1;
-double fps;
 char* charset = NULL;
 int charsetSize = 0;
 double fontRatio = 1.0, constFontRatio = 0.0;
@@ -25,6 +24,7 @@ int ansiEnabled = 0;
 SetColorMode setColorMode = SCM_DISABLED;
 int setColorVal = 0, setColorVal2 = -1;
 int singleCharMode = 0;
+int magnifierMode = 0;
 
 void init(void)
 {

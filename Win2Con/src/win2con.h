@@ -98,7 +98,6 @@ extern int pwClientArea;
 extern ColorMode colorMode;
 extern ScalingMode scalingMode;
 extern int scanlineCount, scanlineHeight;
-extern double fps;
 extern char* charset;
 extern int charsetSize;
 extern double fontRatio, constFontRatio;
@@ -109,6 +108,7 @@ extern int ansiEnabled;
 extern SetColorMode setColorMode;
 extern int setColorVal, setColorVal2;
 extern int singleCharMode;
+extern int magnifierMode;
 
 //argParser.c
 extern long long argumentParser(int argc, char** argv, int* exitReq, int inputNumBase);

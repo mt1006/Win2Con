@@ -81,6 +81,8 @@ static void helpBasicOptions(void)
 		" -tm (--top-most)    Places console window above all other windows\n"
 		"                     and makes it transparent to input.\n"
 		"                     Doesn't work with Windows Terminal!\n"
+		" -m (--magnifier)    Enables \"magnifier mode\".\n"
+		"                     Instead of drawing one window, Win2Con will draw area under console\n."
 		" -inf(--information) Information about Win2Con.\n"
 		" -v  (--version)     Information about Win2Con version.\n"
 		" -h <topic>          Displays help message.\n"
