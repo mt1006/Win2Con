@@ -10,3 +10,5 @@ packed/
 /charset.txt
 
 /w2c
+
+*.dll

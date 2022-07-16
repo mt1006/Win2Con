@@ -16,6 +16,7 @@
 #include <process.h>
 #include <Windows.h>
 #include <dwmapi.h>
+#include <tlhelp32.h>
 #define W2C_OS "Windows"
 
 #else
@@ -134,6 +135,9 @@ extern void restoreConsoleMode();
 
 //conInput.c
 extern void initConInput(void);
+
+//magnifierMode.c
+extern void excludeConsoleFromCapture(void);
 
 //help.c
 extern void showHelp(int basic, int advanced, int colorModes, int scalingModes, int keyboard);

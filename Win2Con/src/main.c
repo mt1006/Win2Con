@@ -80,6 +80,7 @@ void loop(void)
 
 int main(int argc, char** argv)
 {
+	excludeConsoleFromCapture();
 	int exitReq = 0;
 	hwnd = (HWND)argumentParser(argc - 1, argv + 1, &exitReq, 16);
 	if (exitReq) { w2cExit(0); }
