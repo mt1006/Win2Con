@@ -1,19 +1,34 @@
 #include "win2con.h"
 
+#define W2C_FULL_PATH_BUF_SIZE 1024
+
 typedef BOOL(WINAPI* FUNC_ISWOW64PROCESS)(HANDLE, PBOOL);
 
+static void excludeConsoleFromCapture(void);
 static DWORD getConhostPID(void);
 static void injectDLL(DWORD pid, const char* dllName);
 static BOOL IsWOW64();
+static void getPathAndCheckFile(const wchar_t* filename, wchar_t* buf, int bufLen);
+
+void enableMagnifierMode(void)
+{
+	magnifierMode = 1;
+	excludeConsoleFromCapture();
+}
 
 void excludeConsoleFromCapture(void)
 {
+	const wchar_t* W2C_HIDE_CONSOLE_DLL = L"w2cHideConsoleDLL.dll";
+
 	if (IsWOW64()) { error("Win2Con is running under WOW64 - use 64-bit version!", "magnifierMode.c", __LINE__); }
 
 	DWORD conhostPID = getConhostPID();
 	if (!conhostPID) { error("Unable to get \"conhost.exe\" process ID!", "magnifierMode.c", __LINE__); }
 
-	injectDLL(conhostPID, "C:\\Users\\Damian\\Desktop\\Win2Con\\Win2Con\\hide.dll");
+	wchar_t dllFullPath[W2C_FULL_PATH_BUF_SIZE];
+	getPathAndCheckFile(W2C_HIDE_CONSOLE_DLL, dllFullPath, W2C_FULL_PATH_BUF_SIZE);
+
+	injectDLL(conhostPID, dllFullPath);
 }
 
 static DWORD getConhostPID(void)
@@ -103,4 +118,16 @@ static BOOL IsWOW64()
 	}
 
 	return underWOW64;
+}
+
+static void getPathAndCheckFile(const wchar_t* filename, wchar_t* buf, int bufLen)
+{
+	DWORD fileAttrib = GetFileAttributesW(filename);
+	if (fileAttrib == INVALID_FILE_ATTRIBUTES ||
+		(fileAttrib & FILE_ATTRIBUTE_DIRECTORY))
+	{
+		error("Unable to find DLL!", "magnifierMode.c", __LINE__);
+	}
+
+	GetFullPathNameW(filename, bufLen, buf, NULL);
 }

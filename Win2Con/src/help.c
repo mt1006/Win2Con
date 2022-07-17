@@ -83,6 +83,7 @@ static void helpBasicOptions(void)
 		"                     Doesn't work with Windows Terminal!\n"
 		" -m (--magnifier)    Enables \"magnifier mode\".\n"
 		"                     Instead of drawing one window, Win2Con will draw area under console\n."
+		"                     Requires Windows 10 Version 2004 (20H1) [10.0.19041] or higher!"
 		" -inf(--information) Information about Win2Con.\n"
 		" -v  (--version)     Information about Win2Con version.\n"
 		" -h <topic>          Displays help message.\n"
@@ -133,8 +134,6 @@ static void helpAdvancedOptions(void)
 		"                     Examples:\n"
 		"                      win2con -c cstd-gray -s 80 60 -fr 1.0 -ds -dcls > output.txt\n"
 		" -dk (--disable-keys)Disables keyboard control.\n"
-		" -ei (--enable-input)Enables sending input from console to window.\n"
-		"                     Doesn't work properly! Use \"-tm\" instead.\n"
 		" -idpi (--ignore-dpi)Ignores DPI.\n"
 		" -fi (--full-info)   Full info about Win2Con.\n");
 }
@@ -156,8 +155,7 @@ static void helpScalingModes(void)
 	puts(
 		"Scaling modes:\n"
 		" >fill <keep-ratio> (default with enabled keeping ratio)\n"
-		" >int <keep-ratio>\n"
-		" >int-fraction\n"
+		" >soft-fill <keep-ratio>\n"
 		" >const [x] [y]\n"
 		" >no-scaling <keep-ratio>\n");
 }

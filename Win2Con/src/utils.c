@@ -6,17 +6,7 @@
 
 double getTime(void)
 {
-	#ifdef _WIN32
-
 	return (double)clock() / (double)CLOCKS_PER_SEC;
-
-	#else
-
-	struct timespec timeSpec;
-	clock_gettime(CLOCK_REALTIME, &timeSpec);
-	return (double)((timeSpec.tv_nsec / 1000000) + (timeSpec.tv_sec * 1000)) / 1000.0;
-
-	#endif
 }
 
 void strToLower(char* str)
@@ -59,8 +49,6 @@ void getConsoleWindow(void)
 
 void clearScreen(void)
 {
-	#ifdef _WIN32
-
 	// https://docs.microsoft.com/en-us/windows/console/clearing-the-screen
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	SMALL_RECT scrollRect;
@@ -86,12 +74,6 @@ void clearScreen(void)
 	csbi.dwCursorPosition.Y = 0;
 
 	SetConsoleCursorPosition(outputHandle, csbi.dwCursorPosition);
-
-	#else
-
-	fputs("\x1B[H\x1B[J", stdout);
-
-	#endif
 }
 
 void setDefaultColor(void)
@@ -142,17 +124,8 @@ void setConsoleTopMost(int topMost)
 
 void setCursorPos(int x, int y)
 {
-	#ifdef _WIN32
-
 	COORD cursor = { (SHORT)x,(SHORT)y };
 	if (!disableCLS) { SetConsoleCursorPosition(outputHandle, cursor); }
-
-	#else
-
-	if (x == 0 && y == 0) { fputs("\x1B[H", stdout); }
-	else { printf("\x1B[%d;%dH", x, y); }
-
-	#endif
 }
 
 size_t getOutputArraySize(void)
@@ -207,13 +180,3 @@ void error(const char* description, const char* fileName, int line)
 	printf("%s [%s:%d]\n", description, fileName, line);
 	w2cExit(-1);
 }
-
-#ifndef _WIN32
-void Sleep(DWORD ms)
-{
-	struct timespec timeSpec;
-	timeSpec.tv_sec = ms / 1000;
-	timeSpec.tv_nsec = (ms % 1000) * 1000000;
-	nanosleep(&timeSpec, NULL);
-}
-#endif

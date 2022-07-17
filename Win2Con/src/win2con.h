@@ -11,27 +11,12 @@
 #include <stdint.h>
 #include <time.h>
 
-#ifdef _WIN32
-
 #include <process.h>
 #include <Windows.h>
 #include <dwmapi.h>
 #include <tlhelp32.h>
+
 #define W2C_OS "Windows"
-
-#else
-
-#include <unistd.h>
-#include <pthread.h>
-#include <sys/ioctl.h>
-
-#ifdef __linux__
-#define W2C_OS "Linux"
-#else
-#define W2C_OS "[unknown]"
-#endif
-
-#endif
 
 #pragma warning(disable : 4996)
 #pragma comment(lib, "dwmapi")
@@ -64,8 +49,7 @@ typedef enum
 typedef enum
 {
 	SM_FILL,
-	SM_INT,
-	SM_INT_FRACTION,
+	SM_SOFT_FILL,
 	SM_CONST,
 	SM_NO_SCALING
 } ScalingMode;
@@ -103,7 +87,6 @@ extern char* charset;
 extern int charsetSize;
 extern double fontRatio, constFontRatio;
 extern int disableKeyboard, disableCLS, ignoreDPI;
-extern int enableInput;
 extern int reEnterHWND;
 extern int ansiEnabled;
 extern SetColorMode setColorMode;
@@ -112,7 +95,7 @@ extern int singleCharMode;
 extern int magnifierMode;
 
 //argParser.c
-extern long long argumentParser(int argc, char** argv, int* exitReq, int inputNumBase);
+extern long long argumentParser(int argc, char** argv, int* exitReq, int fromGetWindow);
 
 //getWindow.c
 extern HWND getWindow(void);
@@ -137,7 +120,7 @@ extern void restoreConsoleMode();
 extern void initConInput(void);
 
 //magnifierMode.c
-extern void excludeConsoleFromCapture(void);
+extern void enableMagnifierMode(void);
 
 //help.c
 extern void showHelp(int basic, int advanced, int colorModes, int scalingModes, int keyboard);
@@ -157,7 +140,3 @@ extern size_t getOutputArraySize(void);
 extern uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b);
 extern void w2cExit(int code);
 extern void error(const char* description, const char* fileName, int line);
-
-#ifndef _WIN32
-extern void Sleep(DWORD ms);
-#endif

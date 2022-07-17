@@ -9,7 +9,7 @@ typedef struct
 
 static HANDLE inputHandle = NULL;
 static DWORD oldOutputMode, oldInputMode;
-static int outputModeChanged = 0, inputModeChanged = 0;
+static int outputModeChanged = 0;
 
 static void drawWithWinAPI(Frame* frame);
 static void getConsoleInfo(ConsoleInfo* consoleInfo);
@@ -17,7 +17,6 @@ static void setConstColor(void);
 
 void initDrawFrame(void)
 {
-	#ifdef _WIN32
 	inputHandle = GetStdHandle(STD_INPUT_HANDLE);
 
 	DWORD mode;
@@ -34,17 +33,6 @@ void initDrawFrame(void)
 		ansiEnabled = 1;
 		outputModeChanged = 1;
 	}
-
-	if (enableInput)
-	{
-		GetConsoleMode(inputHandle, &mode);
-		oldInputMode = mode;
-		mode &= ~ENABLE_QUICK_EDIT_MODE;
-		mode |= ENABLE_MOUSE_INPUT;
-		SetConsoleMode(inputHandle, mode);
-		inputModeChanged = 1;
-	}
-	#endif
 
 	refreshConSize();
 }
@@ -190,7 +178,6 @@ void drawFrame(Frame* frame)
 
 static void drawWithWinAPI(Frame* frame)
 {
-	#ifdef _WIN32
 	static int scanline = 0;
 
 	CHAR_INFO* output = (CHAR_INFO*)frame->output;
@@ -221,7 +208,6 @@ static void drawWithWinAPI(Frame* frame)
 		scanline++;
 		if (scanline == scanlineCount) { scanline = 0; }
 	}
-	#endif
 }
 
 static void getConsoleInfo(ConsoleInfo* consoleInfo)
@@ -230,8 +216,6 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 
 	int fullConW, fullConH;
 	double fontRatio;
-
-	#ifdef _WIN32
 
 	CONSOLE_SCREEN_BUFFER_INFOEX consoleBufferInfo;
 	consoleBufferInfo.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
@@ -273,16 +257,6 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 			((double)clientRect.bottom / (double)fullConH);
 	}
 
-	#else
-
-	struct winsize winSize;
-	ioctl(0, TIOCGWINSZ, &winSize);
-	fullConW = winSize.ws_col;
-	fullConH = winSize.ws_row;
-	fontRatio = DEFAULT_FONT_RATIO;
-
-	#endif
-
 	if (fullConW < 4) { fullConW = 4; }
 	if (fullConH < 4) { fullConH = 4; }
 
@@ -296,7 +270,6 @@ static void getConsoleInfo(ConsoleInfo* consoleInfo)
 void restoreConsoleMode()
 {
 	if (outputModeChanged) { SetConsoleMode(outputHandle, oldOutputMode); }
-	if (inputModeChanged) { SetConsoleMode(inputHandle, oldInputMode); }
 }
 
 static void setConstColor(void)
@@ -304,9 +277,7 @@ static void setConstColor(void)
 	switch (setColorMode)
 	{
 	case SCM_WINAPI:
-		#ifdef _WIN32
 		SetConsoleTextAttribute(outputHandle, (WORD)setColorVal);
-		#endif
 		break;
 
 	case SCM_CSTD_256:

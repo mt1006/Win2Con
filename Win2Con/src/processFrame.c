@@ -29,59 +29,6 @@ void refreshScaling(void)
 
 	switch (scalingMode)
 	{
-	case SM_INT:
-		if (conW >= wndW) { scaleXMul = conW / wndW; }
-		else { scaleXMul = 1; }
-
-		if (conH >= wndH) { scaleYMul = conH / wndH; }
-		else { scaleYMul = 1; }
-
-		if (scaleWithRatio)
-		{
-			double wndRatio = (double)wndW / (double)wndH;
-			double imgRatio = (wndRatio * fontRatio) *
-				((double)scaleXMul / (double)scaleYMul);
-
-			if (imgRatio > wndRatio)
-			{
-				scaleXMul = (int)round((double)scaleXMul * (wndRatio / imgRatio));
-				if (scaleXMul < 1) { scaleXMul = 1; }
-			}
-			else
-			{
-				scaleYMul = (int)round((double)scaleYMul * (imgRatio / wndRatio));
-				if (scaleYMul < 1) { scaleYMul = 1; }
-			}
-		}
-
-		scaleXDiv = 1;
-		scaleYDiv = 1;
-		break;
-
-	case SM_INT_FRACTION:
-		if (conW >= wndW)
-		{
-			scaleXMul = conW / wndW;
-			scaleXDiv = 1;
-		}
-		else
-		{
-			scaleXMul = 1;
-			scaleXDiv = (wndW / conW) + 1;
-		}
-
-		if (conH >= wndH)
-		{
-			scaleYMul = conH / wndH;
-			scaleYDiv = 1;
-		}
-		else
-		{
-			scaleYMul = 1;
-			scaleYDiv = (wndH / conH) + 1;
-		}
-		break;
-
 	case SM_NO_SCALING:
 		if (scaleWithRatio)
 		{
@@ -110,6 +57,14 @@ void refreshScaling(void)
 
 		scaleXDiv = 1;
 		scaleYDiv = 1;
+		break;
+
+	case SM_SOFT_FILL:
+		scaleXMul = 1;
+		scaleYMul = 1;
+		scaleXDiv = 1;
+		scaleYDiv = 1;
+		break;
 	}
 }
 
@@ -166,7 +121,7 @@ void processFrame(Frame* frame)
 			}
 			else
 			{
-				if (singleCharMode) { val = 255; }
+				if (singleCharMode) { val = 200 + rand() % 56; }
 				else { val = procColor(&valR, &valG, &valB, 1); }
 			}
 
@@ -308,7 +263,6 @@ void processFrame(Frame* frame)
 
 static void processForWinAPI(Frame* frame)
 {
-	#ifdef _WIN32
 	CHAR_INFO* output = (CHAR_INFO*)frame->output;
 
 	int wndI = wndH - 1, wndIMul = 0;
@@ -381,7 +335,6 @@ static void processForWinAPI(Frame* frame)
 			}
 		}
 	}
-	#endif
 }
 
 static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b, int withColors)

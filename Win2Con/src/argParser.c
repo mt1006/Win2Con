@@ -23,7 +23,7 @@ static int opSize(int argc, char** argv);
 static int opScalingMode(int argc, char** argv);
 static int opClientArea(int argc, char** argv);
 static int opTopMost(int argc, char** argv);
-static int opLoop(int argc, char** argv);
+static int opMagnifierMode(int argc, char** argv);
 static int opInformation(int argc, char** argv);
 static int opVersion(int argc, char** argv);
 static int opInterlaced(int argc, char** argv);
@@ -33,7 +33,6 @@ static int opFontRatio(int argc, char** argv);
 static int opSingleChar(int argc, char** argv);
 static int opDisableCLS(int argc, char** argv);
 static int opDisableKeys(int argc, char** argv);
-static int opEnableInput(int argc, char** argv);
 static int opIgnoreDPI(int argc, char** argv);
 static int opFullInfo(int argc, char** argv);
 static void invalidSyntax(int line);
@@ -46,7 +45,7 @@ const Option OPTIONS[] = {
 	{"-sm","--scaling-mode",&opScalingMode,0},
 	{"-ca","--client-area",&opClientArea,0},
 	{"-tm","--top-most",&opTopMost,0},
-	{"-m","--magnifier",&opLoop,0},
+	{"-m","--magnifier",&opMagnifierMode,0},
 	{"-inf","--information",&opInformation,1},
 	{"-v","--version",&opVersion,1},
 	{"-int","--interlaced",&opInterlaced,0},
@@ -56,17 +55,18 @@ const Option OPTIONS[] = {
 	{"-sch","--single-char",&opSingleChar,0},
 	{"-dcls","--disable-cls",&opDisableCLS,0},
 	{"-dk","--disable-keys",&opDisableKeys,0},
-	{"-ei","--enable-input",&opEnableInput,0},
 	{"-idpi","--ignore-dpi",&opIgnoreDPI,0},
 	{"-fi","--full-info",&opFullInfo,1} };
 
 static int optionCount;
 static long long inputVal = 0;
 static int argumentsPassed = 0;
+static int isFromGetWindow = 0;
 
-long long argumentParser(int argc, char** argv, int* exitReq, int inputNumBase)
+long long argumentParser(int argc, char** argv, int* exitReq, int fromGetWindow)
 {
 	static int firstCall = 1;
+	isFromGetWindow = fromGetWindow;
 
 	if (firstCall)
 	{
@@ -77,9 +77,21 @@ long long argumentParser(int argc, char** argv, int* exitReq, int inputNumBase)
 
 	*exitReq = 0;
 	if (argc == 0) { return 0; }
-	if (argc == 1 && argv[0][0] != '-')
+
+	if (fromGetWindow && argc > 0)
 	{
-		return strtoll(argv[0], NULL, inputNumBase);
+		inputVal = 0;
+
+		if (!strcmp(argv[0], "m") || !strcmp(argv[0], "M"))
+		{
+			inputVal = -1;
+		}
+
+		if (argc < 2)
+		{
+			if (!inputVal) { inputVal = opInput(argc, argv); }
+			return inputVal;
+		}
 	}
 
 	if (argumentsPassed)
@@ -163,19 +175,6 @@ long long argumentParser(int argc, char** argv, int* exitReq, int inputNumBase)
 
 static void checkSettings(void)
 {
-	if (colorMode == CM_WINAPI_GRAY ||
-		colorMode == CM_WINAPI_16)
-	{
-		#ifndef _WIN32
-		error("WinAPI color mode not supported on Linux!", "argParser.c", __LINE__);
-		#endif
-	}
-	if (setColorMode == SCM_WINAPI)
-	{
-		#ifndef _WIN32
-		error("WinAPI \"set color\" mode not supported on Linux!", "argParser.c", __LINE__);
-		#endif
-	}
 	if (setColorMode == SCM_WINAPI &&
 		colorMode != CM_WINAPI_GRAY &&
 		colorMode != CM_CSTD_GRAY)
@@ -204,9 +203,13 @@ static void checkSettings(void)
 
 static int opInput(int argc, char** argv)
 {
-	const int INPUT_NUM_BASE = 16;
 	if (argc < 1) { invalidSyntax(__LINE__); }
-	inputVal = strtoll(argv[0], NULL, INPUT_NUM_BASE);
+	if (isFromGetWindow && inputVal) { return 1; }
+	
+	if (isFromGetWindow) { inputVal = strtoll(argv[0], NULL, 10); }
+	else { inputVal = strtoll(argv[0], NULL, 16); }
+
+	if (inputVal < 0) { error("Invalid input!", "argParser.c", __LINE__); }
 	return 1;
 }
 
@@ -245,18 +248,21 @@ static int opScalingMode(int argc, char** argv)
 
 	strToLower(argv[0]);
 	if (!strcmp(argv[0], "fill")) { scalingMode = SM_FILL; }
-	else if (!strcmp(argv[0], "int")) { scalingMode = SM_INT; }
-	else if (!strcmp(argv[0], "int-fraction")) { scalingMode = SM_INT_FRACTION; }
+	else if (!strcmp(argv[0], "soft-fill")) { scalingMode = SM_SOFT_FILL; }
 	else if (!strcmp(argv[0], "const")) { scalingMode = SM_CONST; }
 	else if (!strcmp(argv[0], "no-scaling")) { scalingMode = SM_NO_SCALING; }
 	else { error("Invalid scaling mode name!", "argParser.c", __LINE__); }
 	
 	if (scalingMode == SM_CONST)
 	{
-		if (argc < 3) { invalidSyntax(__LINE__); }
+		if (argc < 2) { invalidSyntax(__LINE__); }
 
 		int constScaleX = atoi(argv[1]);
-		int constScaleY = atoi(argv[2]);
+		int constScaleY;
+
+		if (argc > 2 && argv[2] != '-') { constScaleY = atoi(argv[2]); }
+		else { constScaleY = constScaleX; }
+
 		if (constScaleX == 0 || constScaleY == 0)
 		{
 			error("Invalid const scaling value!", "argParser.c", __LINE__);
@@ -269,7 +275,7 @@ static int opScalingMode(int argc, char** argv)
 
 		return 3;
 	}
-	else if (argc > 1 && argv[1][0] != '-' && scalingMode != SM_INT_FRACTION)
+	else if (argc > 1 && argv[1][0] != '-')
 	{
 		scaleWithRatio = atoi(argv[1]);
 		if (scaleWithRatio != 0 && scaleWithRatio != 1)
@@ -295,9 +301,9 @@ static int opTopMost(int argc, char** argv)
 	return 0;
 }
 
-static int opLoop(int argc, char** argv)
+static int opMagnifierMode(int argc, char** argv)
 {
-	magnifierMode = 1;
+	enableMagnifierMode();
 	return 0;
 }
 
@@ -466,12 +472,6 @@ static int opDisableCLS(int argc, char** argv)
 static int opDisableKeys(int argc, char** argv)
 {
 	disableKeyboard = 1;
-	return 0;
-}
-
-static int opEnableInput(int argc, char** argv)
-{
-	enableInput = 1;
 	return 0;
 }
 

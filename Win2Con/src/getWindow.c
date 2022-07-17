@@ -9,7 +9,7 @@ static int checkIfAltTab;
 static HWND* hwndArray;
 static int hwndArrayPos;
 
-static long long menuInput(const char* prompt, int base);
+static long long menuInput(const char* prompt);
 static void printWindowList(int full, HWND parent);
 static int printWindowInfo(HWND hwnd, int pos);
 static int isAltTabWindow(HWND hwnd);
@@ -33,7 +33,7 @@ HWND getWindow(void)
 		printWindowList(fullList, NULL);
 
 		fflush(stdout);
-		int selection = (int)menuInput(":", 10);
+		int selection = (int)menuInput(":");
 
 		if (selection > 0 && selection < currentPos)
 		{
@@ -54,11 +54,16 @@ HWND getWindow(void)
 			if (selectedHWND == NULL) { continue; }
 			break;
 		}
-		else if (selection == currentPos + 2)
+		else if (selection == currentPos + 2 || selection == -1)
+		{
+			enableMagnifierMode();
+			break;
+		}
+		else if (selection == currentPos + 3)
 		{
 			continue;
 		}
-		else if (selection == currentPos + 3)
+		else if (selection == currentPos + 4)
 		{
 			w2cExit(0);
 		}
@@ -72,7 +77,7 @@ HWND getWindow(void)
 	return selectedHWND;
 }
 
-static long long menuInput(const char* prompt, int base)
+static long long menuInput(const char* prompt)
 {
 	char inputStr[W2C_MAX_INPUT_LEN];
 
@@ -81,7 +86,7 @@ static long long menuInput(const char* prompt, int base)
 
 	int argc, exitReq;
 	char** argv = parsedArgs(inputStr, &argc);
-	long long retVal = argumentParser(argc, argv, &exitReq, base);
+	long long retVal = argumentParser(argc, argv, &exitReq, 1);
 	freeParsedArgs(argv);
 
 	if (exitReq) { w2cExit(0); }
@@ -100,8 +105,9 @@ static void printWindowList(int full, HWND parent)
 	else { printf("%d. (Show full list)\n", currentPos); }
 
 	printf("%d. (From handle)\n", currentPos + 1);
-	printf("%d. (Refresh)\n", currentPos + 2);
-	printf("%d. (Exit)\n", currentPos + 3);
+	printf("%d. (Magnifier mode) [M]\n", currentPos + 2);
+	printf("%d. (Refresh)\n", currentPos + 3);
+	printf("%d. (Exit)\n", currentPos + 4);
 }
 
 static int printWindowInfo(HWND hwnd, int pos)

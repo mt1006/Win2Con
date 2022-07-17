@@ -1,28 +1,47 @@
 #include "win2con.h"
 
-static HDC hdc, screenHDC;
+static HDC outputHDC, unscaledHDC, screenHDC;
 static uint8_t* bitmapArray = NULL;
+static int conWndX, conWndY;
+static int conWndW, conWndH;
 
-static uint8_t* setBitmap(int w, int h);
+static uint8_t* setBitmap(HDC hdc, int w, int h);
 
 void initGetFrame(void)
 {
 	if (!ignoreDPI) { SetProcessDPIAware(); }
+
 	screenHDC = GetDC(NULL);
-	hdc = CreateCompatibleDC(screenHDC);
+	outputHDC = CreateCompatibleDC(screenHDC);
+
+	if (scalingMode == SM_SOFT_FILL)
+	{
+		if (!magnifierMode) { unscaledHDC = CreateCompatibleDC(screenHDC); }
+		SetStretchBltMode(outputHDC, HALFTONE);
+	}
+
 	refreshWinSize();
 }
 
 void refreshWinSize(void)
 {
-	int newWndW, newWndH;
+	static int oldConW = -1, oldConH = -1;
+	int oldWndW = wndW, oldWndH = wndH;
 
 	if (magnifierMode)
 	{
 		RECT wndRect;
 		GetClientRect(conHWND, &wndRect);
-		newWndW = wndRect.right;
-		newWndH = wndRect.bottom;
+		conWndW = wndRect.right;
+		conWndH = wndRect.bottom;
+
+		POINT clientAreaPos = { 0,0 };
+		ClientToScreen(conHWND, &clientAreaPos);
+		conWndX = clientAreaPos.x;
+		conWndY = clientAreaPos.y;
+
+		wndW = conWndW;
+		wndH = conWndH;
 	}
 	else
 	{
@@ -31,31 +50,48 @@ void refreshWinSize(void)
 		if (pwClientArea)
 		{
 			GetClientRect(hwnd, &wndRect);
-			newWndW = wndRect.right;
-			newWndH = wndRect.bottom;
+			wndW = wndRect.right;
+			wndH = wndRect.bottom;
 		}
 		else
 		{
 			GetWindowRect(hwnd, &wndRect);
-			newWndW = wndRect.right - wndRect.left;
-			newWndH = wndRect.bottom - wndRect.top;
+			wndW = wndRect.right - wndRect.left;
+			wndH = wndRect.bottom - wndRect.top;
 		}
 	}
 
-	if (wndW != newWndW || wndH != newWndH)
+	if (scalingMode == SM_SOFT_FILL)
 	{
-		wndW = newWndW;
-		wndH = newWndH;
-		bitmapArray = setBitmap(wndW, wndH);
+		if (conW != oldConW || conH != oldConH)
+		{
+			bitmapArray = setBitmap(outputHDC, conW, conH);
+		}
 	}
+	else
+	{
+		if (wndW != oldWndW || wndH != oldWndH)
+		{
+			bitmapArray = setBitmap(outputHDC, wndW, wndH);
+		}
+	}
+
+	oldConW = conW;
+	oldConH = conH;
 }
 
 void getFrame(Frame* frame)
 {
 	if (magnifierMode)
 	{
-		BitBlt(hdc, 0, 0, wndW, wndH, screenHDC, 0, 0, SRCCOPY);
-		frame->bitmapArray = bitmapArray;
+		if (scalingMode == SM_SOFT_FILL)
+		{
+			StretchBlt(outputHDC, 0, 0, conW, conH, screenHDC, conWndX, conWndY, conWndW, conWndH, SRCCOPY);
+		}
+		else
+		{
+			BitBlt(outputHDC, 0, 0, wndW, wndH, screenHDC, conWndX, conWndY, SRCCOPY);
+		}
 	}
 	else
 	{
@@ -63,14 +99,23 @@ void getFrame(Frame* frame)
 		if (pwClientArea) { pwMode = PW_CLIENTONLY; }
 		else { pwMode = PW_RENDERFULLCONTENT; }
 
-		PrintWindow(hwnd, hdc, pwMode);
-		frame->bitmapArray = bitmapArray;
+		if (scalingMode == SM_SOFT_FILL)
+		{
+			PrintWindow(hwnd, unscaledHDC, pwMode);
+			StretchBlt(outputHDC, 0, 0, conW, conH, unscaledHDC, 0, 0, wndW, wndH, SRCCOPY);
+		}
+		else
+		{
+			PrintWindow(hwnd, outputHDC, pwMode);
+		}
 
 		if (!IsWindow(hwnd)) { reEnterHWND = 1; }
 	}
+
+	frame->bitmapArray = bitmapArray;
 }
 
-static uint8_t* setBitmap(int w, int h)
+static uint8_t* setBitmap(HDC hdc, int w, int h)
 {
 	if (!w || !h) { return NULL; }
 

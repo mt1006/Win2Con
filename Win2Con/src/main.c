@@ -18,7 +18,6 @@ char* charset = NULL;
 int charsetSize = 0;
 double fontRatio = 1.0, constFontRatio = 0.0;
 int disableKeyboard = 0, disableCLS = 0, ignoreDPI = 0;
-int enableInput = 0;
 int reEnterHWND = 0;
 int ansiEnabled = 0;
 SetColorMode setColorMode = SCM_DISABLED;
@@ -31,10 +30,10 @@ void init(void)
 	setDefaultColor();
 	outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-	if (!hwnd)
+	if (!hwnd && !magnifierMode)
 	{
 		hwnd = getWindow();
-		if (!IsWindow(hwnd)) { error("Invalid window!", "main.c", __LINE__); }
+		if (!IsWindow(hwnd) && !magnifierMode) { error("Invalid window!", "main.c", __LINE__); }
 	}
 
 	puts("Loading...");
@@ -64,7 +63,8 @@ void loop(void)
 		}
 
 		double curTime = getTime();
-		if (curTime > lastRefresh + SIZE_REFRESH_PERIOD)
+		if ((curTime > lastRefresh + SIZE_REFRESH_PERIOD)
+			|| magnifierMode)
 		{
 			refreshWinSize();
 			refreshConSize();
@@ -80,9 +80,8 @@ void loop(void)
 
 int main(int argc, char** argv)
 {
-	excludeConsoleFromCapture();
 	int exitReq = 0;
-	hwnd = (HWND)argumentParser(argc - 1, argv + 1, &exitReq, 16);
+	hwnd = (HWND)argumentParser(argc - 1, argv + 1, &exitReq, 0);
 	if (exitReq) { w2cExit(0); }
 
 	init();

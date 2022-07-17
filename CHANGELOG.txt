@@ -1,3 +1,5 @@
 -Added option to set constant color in grayscale mode - "--set-color".
 -Added "--single-char" option.
+-Removed "--enable-input" option ("--top-most" better).
+-Changes in scaling modes.
 -Fix: wrong image ratio in Windows Terminal.
