@@ -1,34 +1,75 @@
 #include "win2con.h"
 
 #define W2C_FULL_PATH_BUF_SIZE 1024
+#define W2C_MAX_OLD_TITLE_LEN 1024
+#define W2C_WAIT_FOR_SET_TITLE 100
 
 typedef BOOL(WINAPI* FUNC_ISWOW64PROCESS)(HANDLE, PBOOL);
 
-static void excludeConsoleFromCapture(void);
+static const wchar_t* W2C_HIDE_CONSOLE_DLL = L"w2cHideConsoleDLL.dll";
+static const char* WINDOW_TITLE_HIDE = "Win2Con-Magnifier/Hide";
+static const char* WINDOW_TITLE_SHOW = "Win2Con-Magnifier/Show";
+
+static void setConsoleDisplayAffinity(int visible);
+static DWORD getConsolePID(void);
 static DWORD getConhostPID(void);
-static void injectDLL(DWORD pid, const char* dllName);
+static void injectDLL(DWORD pid, const wchar_t* dllName);
+static void freeInjectedDLL(HANDLE procHandle, const wchar_t* dllName);
 static BOOL IsWOW64();
 static void getPathAndCheckFile(const wchar_t* filename, wchar_t* buf, int bufLen);
 
 void enableMagnifierMode(void)
 {
 	magnifierMode = 1;
-	excludeConsoleFromCapture();
+	getConsoleWindow();
+	setConsoleDisplayAffinity(0);
 }
 
-void excludeConsoleFromCapture(void)
+void disableMagnifierMode(void)
 {
-	const wchar_t* W2C_HIDE_CONSOLE_DLL = L"w2cHideConsoleDLL.dll";
+	if (magnifierMode)
+	{
+		setConsoleDisplayAffinity(1);
+		magnifierMode = 0;
+	}
+}
 
+void setConsoleDisplayAffinity(int visible)
+{
 	if (IsWOW64()) { error("Win2Con is running under WOW64 - use 64-bit version!", "magnifierMode.c", __LINE__); }
 
-	DWORD conhostPID = getConhostPID();
-	if (!conhostPID) { error("Unable to get \"conhost.exe\" process ID!", "magnifierMode.c", __LINE__); }
+	DWORD consolePID = getConsolePID();
 
 	wchar_t dllFullPath[W2C_FULL_PATH_BUF_SIZE];
 	getPathAndCheckFile(W2C_HIDE_CONSOLE_DLL, dllFullPath, W2C_FULL_PATH_BUF_SIZE);
 
-	injectDLL(conhostPID, dllFullPath);
+	wchar_t oldConTitle[W2C_MAX_OLD_TITLE_LEN];
+	GetConsoleTitleW(oldConTitle, W2C_MAX_OLD_TITLE_LEN);
+	if (visible) { SetConsoleTitleA(WINDOW_TITLE_SHOW); }
+	else { SetConsoleTitleA(WINDOW_TITLE_HIDE); }
+	Sleep(W2C_WAIT_FOR_SET_TITLE);
+
+	injectDLL(consolePID, dllFullPath);
+
+	SetConsoleTitleW(oldConTitle);
+}
+
+static DWORD getConsolePID(void)
+{
+	DWORD retVal = 0;
+
+	if (wtDragBarHWND)
+	{
+		GetWindowThreadProcessId(wtDragBarHWND, &retVal);
+		if (!retVal) { error("Unable to get Windows Terminal process ID!", "magnifierMode.c", __LINE__); }
+	}
+	else
+	{
+		retVal = getConhostPID();
+		if (!retVal) { error("Unable to get \"conhost.exe\" process ID!", "magnifierMode.c", __LINE__); }
+	}
+
+	return retVal;
 }
 
 static DWORD getConhostPID(void)
@@ -80,10 +121,9 @@ static void injectDLL(DWORD pid, const wchar_t* dllName)
 	int dllNameLen = wcslen(dllName) * sizeof(wchar_t) + 1;
 
 	HANDLE procHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-	if (!procHandle) { error("Unable to open \"conhost.exe\" process!", "magnifierMode.c", __LINE__); }
+	if (!procHandle) { error("Unable to open console process!", "magnifierMode.c", __LINE__); }
 
 	HMODULE moduleHandle = GetModuleHandleA("kernel32.dll");
-	if (!moduleHandle) { error("Unable to get \"kernel32.dll\" module handle!", "magnifierMode.c", __LINE__); }
 	void* loadLibAddress = GetProcAddress(moduleHandle, "LoadLibraryW");
 
 	void* memForStr = VirtualAllocEx(procHandle, NULL, dllNameLen,
@@ -96,9 +136,44 @@ static void injectDLL(DWORD pid, const wchar_t* dllName)
 	if (!threadHandle) { error("Unable to create remote thread!", "magnifierMode.c", __LINE__); }
 	WaitForSingleObject(threadHandle, INFINITE);
 	VirtualFreeEx(procHandle, memForStr, dllNameLen, MEM_RELEASE);
-
 	CloseHandle(threadHandle);
+
+	freeInjectedDLL(procHandle, dllName);
+
 	CloseHandle(procHandle);
+}
+
+static void freeInjectedDLL(HANDLE procHandle, const wchar_t* dllName)
+{
+	HMODULE tempModule;
+	DWORD requiredSize = 0;
+	EnumProcessModules(procHandle, &tempModule, sizeof(HMODULE), &requiredSize);
+
+	HMODULE* modules = malloc(requiredSize);
+	int moduleCount = requiredSize / sizeof(HMODULE);
+
+	if (EnumProcessModules(procHandle, modules, requiredSize, &requiredSize))
+	{
+		wchar_t modulePath[W2C_FULL_PATH_BUF_SIZE];
+
+		for (int i = 0; i < moduleCount; i++)
+		{
+			if (GetModuleFileNameExW(procHandle, modules[i],
+				modulePath, W2C_FULL_PATH_BUF_SIZE))
+			{
+				if (!wcscmp(modulePath, dllName))
+				{
+					HMODULE moduleHandle = GetModuleHandleA("kernel32.dll");
+					void* freeLibAddress = GetProcAddress(moduleHandle, "FreeLibrary");
+
+					HANDLE threadHandle = CreateRemoteThread(procHandle, NULL, NULL,
+						(LPTHREAD_START_ROUTINE)freeLibAddress, modules[i], 0, NULL);
+					WaitForSingleObject(threadHandle, INFINITE);
+					CloseHandle(threadHandle);
+				}
+			}
+		}
+	}
 }
 
 static BOOL IsWOW64()

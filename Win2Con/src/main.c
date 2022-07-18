@@ -24,6 +24,7 @@ SetColorMode setColorMode = SCM_DISABLED;
 int setColorVal = 0, setColorVal2 = -1;
 int singleCharMode = 0;
 int magnifierMode = 0;
+int brightnessRand = 0;
 
 void init(void)
 {

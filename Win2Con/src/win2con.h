@@ -15,6 +15,7 @@
 #include <Windows.h>
 #include <dwmapi.h>
 #include <tlhelp32.h>
+#include <Psapi.h>
 
 #define W2C_OS "Windows"
 
@@ -93,6 +94,7 @@ extern SetColorMode setColorMode;
 extern int setColorVal, setColorVal2;
 extern int singleCharMode;
 extern int magnifierMode;
+extern int brightnessRand;
 
 //argParser.c
 extern long long argumentParser(int argc, char** argv, int* exitReq, int fromGetWindow);
@@ -121,6 +123,7 @@ extern void initConInput(void);
 
 //magnifierMode.c
 extern void enableMagnifierMode(void);
+extern void disableMagnifierMode(void);
 
 //help.c
 extern void showHelp(int basic, int advanced, int colorModes, int scalingModes, int keyboard);

@@ -32,7 +32,7 @@ void getConsoleWindow(void)
 
 		GetConsoleTitleW(oldConTitle, W2C_MAX_OLD_TITLE_LEN);
 		sprintf(newConTitle, "Win2Con-(%d/%d)",
-			(int)clock(), (int)GetCurrentProcessId());
+			(int)time(NULL), (int)GetCurrentProcessId());
 		SetConsoleTitleA(newConTitle);
 		Sleep(W2C_WAIT_FOR_SET_TITLE);
 		HWND newConHWND = FindWindowA(NULL, newConTitle);
@@ -168,6 +168,7 @@ uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b)
 
 void w2cExit(int code)
 {
+	disableMagnifierMode();
 	setConsoleTopMost(0);
 	setDefaultColor();
 	restoreConsoleMode();

@@ -121,8 +121,24 @@ void processFrame(Frame* frame)
 			}
 			else
 			{
-				if (singleCharMode) { val = 200 + rand() % 56; }
+				if (singleCharMode) { val = 255; }
 				else { val = procColor(&valR, &valG, &valB, 1); }
+			}
+
+			if (brightnessRand)
+			{
+				if (singleCharMode)
+				{
+					val -= rand() % (brightnessRand + 1);
+				}
+				else
+				{
+					int tempVal = (int)val + (rand() % (brightnessRand + 1)) - (brightnessRand / 2);
+
+					if (tempVal >= 255) { val = 255; }
+					else if (tempVal <= 0) { val = 0; }
+					else { val = (uint8_t)tempVal; }
+				}
 			}
 
 			switch (colorMode)
@@ -340,9 +356,14 @@ static void processForWinAPI(Frame* frame)
 static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b, int withColors)
 {
 	uint8_t valR = *r, valG = *g, valB = *b;
+	uint8_t retVal = (uint8_t)((double)valR * 0.299 + (double)valG * 0.587 + (double)valB * 0.114);
 
 	if (withColors)
 	{
+		if (!valR) { valR = 1; }
+		if (!valG) { valG = 1; }
+		if (!valB) { valB = 1; }
+
 		if (valR >= valG && valR >= valB)
 		{
 			*r = 255;
@@ -363,7 +384,7 @@ static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b, int withColors)
 		}
 	}
 
-	return (uint8_t)((double)valR * 0.299 + (double)valG * 0.587 + (double)valB * 0.114);
+	return retVal;
 }
 
 static uint8_t findNearestColor16(uint8_t r, uint8_t g, uint8_t b)
