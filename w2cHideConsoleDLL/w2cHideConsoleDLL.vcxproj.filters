@@ -6,7 +6,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\dllmain.cpp">
+    <ClCompile Include="src\dllmain.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
