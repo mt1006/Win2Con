@@ -12,6 +12,7 @@ static const uint8_t CMD_COLORS_16[16][3] =
 static void processForWinAPI(Frame* frame);
 static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b, int withColors);
 static uint8_t findNearestColor16(uint8_t r, uint8_t g, uint8_t b);
+static void procRand(uint8_t* val);
 
 void initProcessFrame(void)
 {
@@ -90,7 +91,19 @@ void processFrame(Frame* frame)
 	uint8_t* output = (uint8_t*)frame->output;
 	frame->outputLineOffsets[0] = 0;
 
-	int wndI = wndH - 1, wndIMul = 0;
+	int bmpW, bmpH;
+	if (scalingMode == SM_SOFT_FILL)
+	{
+		bmpW = conW;
+		bmpH = conH;
+	}
+	else
+	{
+		bmpW = wndW;
+		bmpH = wndH;
+	}
+
+	int bmpI = bmpH - 1, bmpIMul = 0;
 	for (int i = 0; i < imgH; i++)
 	{
 		uint8_t oldColor = -1;
@@ -99,19 +112,19 @@ void processFrame(Frame* frame)
 
 		int offset = frame->outputLineOffsets[i];
 
-		int wndJ = 0, wndJMul = 0;
+		int bmpJ = 0, bmpJMul = 0;
 		for (int j = 0; j < imgW; j++)
 		{
-			if (wndJ >= wndW || wndI < 0)
+			if (bmpJ >= bmpW || bmpI < 0)
 			{
 				output[offset] = ' ';
 				offset++;
 				continue;
 			}
 
-			uint8_t valR = frame->bitmapArray[((wndI * wndW) + wndJ) * 4 + 2];
-			uint8_t valG = frame->bitmapArray[((wndI * wndW) + wndJ) * 4 + 1];
-			uint8_t valB = frame->bitmapArray[((wndI * wndW) + wndJ) * 4];
+			uint8_t valR = frame->bitmapArray[((bmpI * bmpW) + bmpJ) * 4 + 2];
+			uint8_t valG = frame->bitmapArray[((bmpI * bmpW) + bmpJ) * 4 + 1];
+			uint8_t valB = frame->bitmapArray[((bmpI * bmpW) + bmpJ) * 4];
 
 			uint8_t val, color;
 
@@ -125,21 +138,7 @@ void processFrame(Frame* frame)
 				else { val = procColor(&valR, &valG, &valB, 1); }
 			}
 
-			if (brightnessRand)
-			{
-				if (singleCharMode)
-				{
-					val -= rand() % (brightnessRand + 1);
-				}
-				else
-				{
-					int tempVal = (int)val + (rand() % (brightnessRand + 1)) - (brightnessRand / 2);
-
-					if (tempVal >= 255) { val = 255; }
-					else if (tempVal <= 0) { val = 0; }
-					else { val = (uint8_t)tempVal; }
-				}
-			}
+			if (brightnessRand) { procRand(&val); }
 
 			switch (colorMode)
 			{
@@ -239,15 +238,15 @@ void processFrame(Frame* frame)
 
 			if (scalingMode == SM_FILL)
 			{
-				wndJ = j * wndW / imgW;
+				bmpJ = j * bmpW / imgW;
 			}
 			else
 			{
-				wndJMul++;
-				if (wndJMul == scaleXMul)
+				bmpJMul++;
+				if (bmpJMul == scaleXMul)
 				{
-					wndJ += scaleXDiv;
-					wndJMul = 0;
+					bmpJ += scaleXDiv;
+					bmpJMul = 0;
 				}
 			}
 		}
@@ -257,15 +256,15 @@ void processFrame(Frame* frame)
 
 		if (scalingMode == SM_FILL)
 		{
-			wndI = wndH - (i * wndH / imgH) - 1;
+			bmpI = bmpH - (i * bmpH / imgH) - 1;
 		}
 		else
 		{
-			wndIMul++;
-			if (wndIMul == scaleYMul)
+			bmpIMul++;
+			if (bmpIMul == scaleYMul)
 			{
-				wndI -= scaleYDiv;
-				wndIMul = 0;
+				bmpI -= scaleYDiv;
+				bmpIMul = 0;
 			}
 		}
 	}
@@ -281,22 +280,34 @@ static void processForWinAPI(Frame* frame)
 {
 	CHAR_INFO* output = (CHAR_INFO*)frame->output;
 
-	int wndI = wndH - 1, wndIMul = 0;
+	int bmpW, bmpH;
+	if (scalingMode == SM_SOFT_FILL)
+	{
+		bmpW = conW;
+		bmpH = conH;
+	}
+	else
+	{
+		bmpW = wndW;
+		bmpH = wndH;
+	}
+
+	int bmpI = bmpH - 1, bmpIMul = 0;
 	for (int i = 0; i < imgH; i++)
 	{
-		int wndJ = 0, wndJMul = 0;
+		int bmpJ = 0, bmpJMul = 0;
 		for (int j = 0; j < imgW; j++)
 		{
-			if (j >= wndW || i >= wndH)
+			if (j >= bmpW || i >= bmpH)
 			{
 				output[(i * imgW) + j].Char.AsciiChar = ' ';
 				output[(i * imgW) + j].Attributes = 0;
 				continue;
 			}
 
-			uint8_t valR = frame->bitmapArray[((wndI * wndW) + wndJ) * 4 + 2];
-			uint8_t valG = frame->bitmapArray[((wndI * wndW) + wndJ) * 4 + 1];
-			uint8_t valB = frame->bitmapArray[((wndI * wndW) + wndJ) * 4];
+			uint8_t valR = frame->bitmapArray[((bmpI * bmpW) + bmpJ) * 4 + 2];
+			uint8_t valG = frame->bitmapArray[((bmpI * bmpW) + bmpJ) * 4 + 1];
+			uint8_t valB = frame->bitmapArray[((bmpI * bmpW) + bmpJ) * 4];
 
 			uint8_t val;
 
@@ -304,11 +315,13 @@ static void processForWinAPI(Frame* frame)
 			{
 				if (singleCharMode) { val = 255; }
 				else { val = procColor(&valR, &valG, &valB, 1); }
+
 				output[(i * imgW) + j].Attributes = findNearestColor16(valR, valG, valB);
 			}
 			else
 			{
 				val = procColor(&valR, &valG, &valB, 0);
+
 				if (setColorMode == SCM_WINAPI)
 				{
 					output[(i * imgW) + j].Attributes = setColorVal;
@@ -320,34 +333,36 @@ static void processForWinAPI(Frame* frame)
 				}
 			}
 
+			if (brightnessRand) { procRand(&val); }
+
 			output[(i * imgW) + j].Char.AsciiChar = charset[(val * charsetSize) / 256];
 
 			if (scalingMode == SM_FILL)
 			{
-				wndJ = j * wndW / imgW;
+				bmpJ = j * bmpW / imgW;
 			}
 			else
 			{
-				wndJMul++;
-				if (wndJMul == scaleXMul)
+				bmpJMul++;
+				if (bmpJMul == scaleXMul)
 				{
-					wndJ += scaleXDiv;
-					wndJMul = 0;
+					bmpJ += scaleXDiv;
+					bmpJMul = 0;
 				}
 			}
 		}
 
 		if (scalingMode == SM_FILL)
 		{
-			wndI = wndH - (i * wndH / imgH) - 1;
+			bmpI = bmpH - (i * bmpH / imgH) - 1;
 		}
 		else
 		{
-			wndIMul++;
-			if (wndIMul == scaleYMul)
+			bmpIMul++;
+			if (bmpIMul == scaleYMul)
 			{
-				wndI -= scaleYDiv;
-				wndIMul = 0;
+				bmpI -= scaleYDiv;
+				bmpIMul = 0;
 			}
 		}
 	}
@@ -403,4 +418,30 @@ static uint8_t findNearestColor16(uint8_t r, uint8_t g, uint8_t b)
 		}
 	}
 	return (uint8_t)minPos;
+}
+
+static void procRand(uint8_t* val)
+{
+	if (singleCharMode)
+	{
+		*val -= rand() % (brightnessRand + 1);
+	}
+	else
+	{
+		if (brightnessRand > 0)
+		{
+			int tempVal = (int)(*val) + (rand() % (brightnessRand + 1)) - (brightnessRand / 2);
+
+			if (tempVal >= 255) { *val = 255; }
+			else if (tempVal <= 0) { *val = 0; }
+			else { *val = (uint8_t)tempVal; }
+		}
+		else
+		{
+			int tempVal = (int)(*val) - (rand() % (-brightnessRand + 1));
+
+			if (tempVal <= 0) { *val = 0; }
+			else { *val = (uint8_t)tempVal; }
+		}
+	}
 }

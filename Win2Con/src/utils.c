@@ -166,6 +166,12 @@ uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b)
 		+ round((double)b / 255.0 * 5.0));
 }
 
+void stopMainThread(void)
+{
+	stopMainThreadVal = 1;
+	while (stopMainThreadVal != 2) { Sleep(5); }
+}
+
 void w2cExit(int code)
 {
 	disableMagnifierMode();

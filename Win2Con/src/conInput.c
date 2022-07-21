@@ -9,10 +9,12 @@ static ThreadIDType conThreadID = 0;
 static ThreadRetType CALL_CONV conThread(void* ptr);
 static void conKeyEvent(KEY_EVENT_RECORD keyEvent);
 static void keyboardControl(WORD vkCode);
+static BOOL WINAPI consoleCtrlHandler(DWORD ctrlType);
 
 void initConInput(void)
 {
-	if (!disableKeyboard || magnifierMode)
+	SetConsoleCtrlHandler(&consoleCtrlHandler, TRUE);
+	if (!disableKeyboard)
 	{
 		conThreadID = _beginthread(&conThread, 0, NULL);
 	}
@@ -57,8 +59,45 @@ static void conKeyEvent(KEY_EVENT_RECORD keyEvent)
 
 static void keyboardControl(WORD vkCode)
 {
-	if (vkCode == 'Q') { hwnd = NULL; }
-	else if (vkCode == 'X') { w2cExit(0); }
-	else if (vkCode == 'C') { pwClientArea = !pwClientArea; }
-	else if (vkCode == 'T') { setConsoleTopMost(-1); }
+	switch (vkCode)
+	{
+	case 'Q':
+		if (magnifierMode)
+		{
+			stopMainThread();
+			w2cExit(0);
+		}
+		else
+		{
+			hwnd = NULL;
+		}
+		break;
+
+	case 'X':
+		stopMainThread();
+		w2cExit(0);
+		break;
+
+	case 'C':
+		pwClientArea = !pwClientArea;
+		break;
+
+	case 'T':
+		setConsoleTopMost(-1);
+		break;
+	}
+}
+
+static BOOL WINAPI consoleCtrlHandler(DWORD ctrlType)
+{
+	switch (ctrlType)
+	{
+	case CTRL_C_EVENT:
+	case CTRL_BREAK_EVENT:
+		stopMainThread();
+		w2cExit(0);
+		return TRUE;
+	}
+
+	return FALSE;
 }

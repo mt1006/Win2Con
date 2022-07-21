@@ -91,7 +91,7 @@ long long argumentParser(int argc, char** argv, int* exitReq, int fromGetWindow)
 
 		if (argc < 2)
 		{
-			if (!inputVal) { inputVal = opInput(argc, argv); }
+			if (!inputVal) { opInput(argc, argv); }
 			return inputVal;
 		}
 	}
@@ -172,6 +172,8 @@ long long argumentParser(int argc, char** argv, int* exitReq, int fromGetWindow)
 	free(input);
 	free(usedOptions);
 
+	checkSettings();
+
 	return inputVal;
 }
 
@@ -200,6 +202,11 @@ static void checkSettings(void)
 			colorMode == CM_CSTD_GRAY))
 	{
 		error("Single character mode requires colors!", "argParser.c", __LINE__);
+	}
+
+	if (singleCharMode && brightnessRand)
+	{
+		if (brightnessRand < 0) { brightnessRand = -brightnessRand; }
 	}
 }
 
@@ -259,11 +266,19 @@ static int opScalingMode(int argc, char** argv)
 	{
 		if (argc < 2) { invalidSyntax(__LINE__); }
 
+		int retVal = 2;
 		int constScaleX = atoi(argv[1]);
 		int constScaleY;
 
-		if (argc > 2 && argv[2] != '-') { constScaleY = atoi(argv[2]); }
-		else { constScaleY = constScaleX; }
+		if (argc > 2 && argv[2][0] != '-')
+		{
+			constScaleY = atoi(argv[2]);
+			retVal = 3;
+		}
+		else
+		{
+			constScaleY = constScaleX;
+		}
 
 		if (constScaleX == 0 || constScaleY == 0)
 		{
@@ -275,7 +290,7 @@ static int opScalingMode(int argc, char** argv)
 		if (constScaleY > 0) { scaleYMul = constScaleY; }
 		else { scaleYDiv = -constScaleY; }
 
-		return 3;
+		return retVal;
 	}
 	else if (argc > 1 && argv[1][0] != '-')
 	{
@@ -461,8 +476,11 @@ static int opRand(int argc, char** argv)
 {
 	if (argc < 1 || argv[0][0] == '-') { invalidSyntax(__LINE__); }
 	srand(time(NULL));
-	brightnessRand = atoi(argv[0]);
-	if (brightnessRand < 0 || brightnessRand > 255) { error("Invalid rand value!", "argParser.c", __LINE__); }
+
+	if (argv[0][0] == '@') { brightnessRand = -atoi(argv[0] + 1); }
+	else { brightnessRand = atoi(argv[0]); }
+
+	if (brightnessRand < -255 || brightnessRand > 255) { error("Invalid rand value!", "argParser.c", __LINE__); }
 	return 1;
 }
 

@@ -20,17 +20,20 @@ static void getPathAndCheckFile(const wchar_t* filename, wchar_t* buf, int bufLe
 
 void enableMagnifierMode(void)
 {
-	magnifierMode = 1;
-	getConsoleWindow();
-	setConsoleDisplayAffinity(0);
+	if (!magnifierMode)
+	{
+		getConsoleWindow();
+		setConsoleDisplayAffinity(0);
+		magnifierMode = 1;
+	}
 }
 
 void disableMagnifierMode(void)
 {
 	if (magnifierMode)
 	{
-		setConsoleDisplayAffinity(1);
 		magnifierMode = 0;
+		setConsoleDisplayAffinity(1);
 	}
 }
 
@@ -161,6 +164,9 @@ static void freeInjectedDLL(HANDLE procHandle, const wchar_t* dllName)
 			if (GetModuleFileNameExW(procHandle, modules[i],
 				modulePath, W2C_FULL_PATH_BUF_SIZE))
 			{
+				wcslwr(modulePath);
+				wcslwr(dllName);
+
 				if (!wcscmp(modulePath, dllName))
 				{
 					HMODULE moduleHandle = GetModuleHandleA("kernel32.dll");
@@ -197,6 +203,19 @@ static BOOL IsWOW64()
 
 static void getPathAndCheckFile(const wchar_t* filename, wchar_t* buf, int bufLen)
 {
+	wchar_t w2cExecutablePath[W2C_FULL_PATH_BUF_SIZE];
+	GetModuleFileNameW(NULL, w2cExecutablePath, W2C_FULL_PATH_BUF_SIZE);
+	for (int i = wcslen(w2cExecutablePath) - 1; i >= 0; i--)
+	{
+		if (w2cExecutablePath[i] == '\\')
+		{
+			w2cExecutablePath[i + 1] = '\0';
+			break;
+		}
+	}
+
+	SetCurrentDirectoryW(w2cExecutablePath);
+
 	DWORD fileAttrib = GetFileAttributesW(filename);
 	if (fileAttrib == INVALID_FILE_ATTRIBUTES ||
 		(fileAttrib & FILE_ATTRIBUTE_DIRECTORY))

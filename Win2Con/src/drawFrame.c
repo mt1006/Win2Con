@@ -10,9 +10,9 @@ typedef struct
 static HANDLE inputHandle = NULL;
 static DWORD oldOutputMode, oldInputMode;
 static int outputModeChanged = 0;
+static ConsoleInfo consoleInfo;
 
 static void drawWithWinAPI(Frame* frame);
-static void getConsoleInfo(ConsoleInfo* consoleInfo);
 static void setConstColor(void);
 
 void initDrawFrame(void)
@@ -37,14 +37,83 @@ void initDrawFrame(void)
 	refreshConSize();
 }
 
+void getConsoleInfo(void)
+{
+	const double DEFAULT_FONT_RATIO = 8.0 / 18.0;
+
+	int fullConW, fullConH;
+	double fontRatio;
+
+	CONSOLE_SCREEN_BUFFER_INFOEX consoleBufferInfo;
+	consoleBufferInfo.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
+	GetConsoleScreenBufferInfoEx(outputHandle, &consoleBufferInfo);
+
+	fullConW = consoleBufferInfo.srWindow.Right - consoleBufferInfo.srWindow.Left + 1;
+	fullConH = consoleBufferInfo.srWindow.Bottom - consoleBufferInfo.srWindow.Top + 1;
+
+	RECT clientRect = { 0 };
+	GetClientRect(conHWND, &clientRect);
+
+	if (clientRect.bottom == 0 || fullConW == 0 || fullConH == 0)
+	{
+		CONSOLE_FONT_INFOEX consoleFontInfo;
+		consoleFontInfo.cbSize = sizeof(CONSOLE_FONT_INFOEX);
+		GetCurrentConsoleFontEx(outputHandle, FALSE, &consoleFontInfo);
+
+		if (consoleFontInfo.dwFontSize.X == 0 ||
+			consoleFontInfo.dwFontSize.Y == 0)
+		{
+			fontRatio = DEFAULT_FONT_RATIO;
+		}
+		else
+		{
+			fontRatio = (double)consoleFontInfo.dwFontSize.X /
+				(double)consoleFontInfo.dwFontSize.Y;
+		}
+	}
+	else
+	{
+		if (magnifierMode)
+		{
+			POINT clientAreaPos = { 0,0 };
+			ClientToScreen(conHWND, &clientAreaPos);
+			conWndX = clientAreaPos.x;
+			conWndY = clientAreaPos.y;
+		}
+
+		if (wtDragBarHWND && IsWindowVisible(wtDragBarHWND))
+		{
+			RECT wtDragBarRect;
+			GetClientRect(wtDragBarHWND, &wtDragBarRect);
+			clientRect.bottom -= wtDragBarRect.bottom;
+			if (magnifierMode) { conWndY += wtDragBarRect.bottom; }
+		}
+
+		fontRatio = ((double)clientRect.right / (double)fullConW) /
+			((double)clientRect.bottom / (double)fullConH);
+	}
+
+	if (magnifierMode)
+	{
+		conWndW = clientRect.right;
+		conWndH = clientRect.bottom;
+	}
+
+	if (fullConW < 4) { fullConW = 4; }
+	if (fullConH < 4) { fullConH = 4; }
+
+	if (colorMode != CM_WINAPI_GRAY && colorMode != CM_WINAPI_16) { fullConW--; }
+
+	consoleInfo.conW = fullConW;
+	consoleInfo.conH = fullConH;
+	consoleInfo.fontRatio = fontRatio;
+}
+
 void refreshConSize(void)
 {
 	static int firstCall = 1;
 	static int setNewSize = 0;
 	static int lastWndW = 0, lastWndH = 0;
-
-	ConsoleInfo consoleInfo;
-	getConsoleInfo(&consoleInfo);
 
 	double newFR;
 	if (constFontRatio == 0.0) { newFR = consoleInfo.fontRatio; }
@@ -58,7 +127,8 @@ void refreshConSize(void)
 			argH = consoleInfo.conH;
 		}
 
-		if (scalingMode != SM_FILL || !scaleWithRatio)
+		if ((scalingMode != SM_FILL && scalingMode != SM_SOFT_FILL) ||
+			!scaleWithRatio)
 		{
 			fontRatio = newFR;
 			if (firstCall)
@@ -91,7 +161,8 @@ void refreshConSize(void)
 	}
 	else
 	{
-		if (scalingMode != SM_FILL || !scaleWithRatio)
+		if ((scalingMode != SM_FILL && scalingMode != SM_SOFT_FILL) ||
+			!scaleWithRatio)
 		{
 			fontRatio = newFR;
 			if (conW != consoleInfo.conW || conH != consoleInfo.conH)
@@ -208,63 +279,6 @@ static void drawWithWinAPI(Frame* frame)
 		scanline++;
 		if (scanline == scanlineCount) { scanline = 0; }
 	}
-}
-
-static void getConsoleInfo(ConsoleInfo* consoleInfo)
-{
-	const double DEFAULT_FONT_RATIO = 8.0 / 18.0;
-
-	int fullConW, fullConH;
-	double fontRatio;
-
-	CONSOLE_SCREEN_BUFFER_INFOEX consoleBufferInfo;
-	consoleBufferInfo.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
-	GetConsoleScreenBufferInfoEx(outputHandle, &consoleBufferInfo);
-
-	fullConW = consoleBufferInfo.srWindow.Right - consoleBufferInfo.srWindow.Left + 1;
-	fullConH = consoleBufferInfo.srWindow.Bottom - consoleBufferInfo.srWindow.Top + 1;
-
-	RECT clientRect = { 0 };
-	GetClientRect(conHWND, &clientRect);
-
-	if (clientRect.bottom == 0 || fullConW == 0 || fullConH == 0)
-	{
-		CONSOLE_FONT_INFOEX consoleFontInfo;
-		consoleFontInfo.cbSize = sizeof(CONSOLE_FONT_INFOEX);
-		GetCurrentConsoleFontEx(outputHandle, FALSE, &consoleFontInfo);
-
-		if (consoleFontInfo.dwFontSize.X == 0 ||
-			consoleFontInfo.dwFontSize.Y == 0)
-		{
-			fontRatio = DEFAULT_FONT_RATIO;
-		}
-		else
-		{
-			fontRatio = (double)consoleFontInfo.dwFontSize.X /
-				(double)consoleFontInfo.dwFontSize.Y;
-		}
-	}
-	else
-	{
-		if (wtDragBarHWND && IsWindowVisible(wtDragBarHWND))
-		{
-			RECT wtDragBarRect;
-			GetClientRect(wtDragBarHWND, &wtDragBarRect);
-			clientRect.bottom -= wtDragBarRect.bottom;
-		}
-
-		fontRatio = ((double)clientRect.right / (double)fullConW) /
-			((double)clientRect.bottom / (double)fullConH);
-	}
-
-	if (fullConW < 4) { fullConW = 4; }
-	if (fullConH < 4) { fullConH = 4; }
-
-	if (colorMode != CM_WINAPI_GRAY && colorMode != CM_WINAPI_16) { fullConW--; }
-
-	consoleInfo->conW = fullConW;
-	consoleInfo->conH = fullConH;
-	consoleInfo->fontRatio = fontRatio;
 }
 
 void restoreConsoleMode()

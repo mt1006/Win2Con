@@ -1,6 +1,6 @@
 /*
 * Project: Win2Con
-* Version: 1.0
+* Version: 1.1
 * Author: https://github.com/mt1006
 */
 
@@ -16,11 +16,13 @@
 #include <dwmapi.h>
 #include <tlhelp32.h>
 #include <Psapi.h>
-
-#define W2C_OS "Windows"
+#include <shellscalingapi.h>
 
 #pragma warning(disable : 4996)
 #pragma comment(lib, "dwmapi")
+#pragma comment(lib, "Shcore")
+
+#define W2C_OS "Windows"
 
 #if defined(__x86_64__) || defined(_M_AMD64)
 #define W2C_CPU "AMD64"
@@ -30,7 +32,7 @@
 #define W2C_CPU "[unknown]"
 #endif
 
-#define W2C_VERSION "1.0"
+#define W2C_VERSION "1.1"
 #define TO_STR(x) #x
 #define DEF_TO_STR(x) TO_STR(x)
 
@@ -77,6 +79,8 @@ extern int imgW, imgH;
 extern int conW, conH;
 extern int wndW, wndH;
 extern int argW, argH;
+extern int conWndX, conWndY;
+extern int conWndW, conWndH;
 extern int scaleXMul, scaleYMul;
 extern int scaleXDiv, scaleYDiv;
 extern int scaleWithRatio;
@@ -95,6 +99,7 @@ extern int setColorVal, setColorVal2;
 extern int singleCharMode;
 extern int magnifierMode;
 extern int brightnessRand;
+extern int stopMainThreadVal;
 
 //argParser.c
 extern long long argumentParser(int argc, char** argv, int* exitReq, int fromGetWindow);
@@ -105,6 +110,7 @@ extern HWND getWindow(void);
 //getFrame.c
 extern void initGetFrame(void);
 extern void refreshWinSize(void);
+extern void refreshBitmapSize(void);
 extern void getFrame(Frame* frame);
 
 //processFrame.c
@@ -114,6 +120,7 @@ extern void processFrame(Frame* frame);
 
 //drawFrame.c
 extern void initDrawFrame(void);
+extern void getConsoleInfo(void);
 extern void refreshConSize(void);
 extern void drawFrame(Frame* frame);
 extern void restoreConsoleMode();
@@ -141,5 +148,6 @@ extern void setConsoleTopMost(int topMost);
 extern void setCursorPos(int x, int y);
 extern size_t getOutputArraySize(void);
 extern uint8_t rgbToAnsi256(uint8_t r, uint8_t g, uint8_t b);
+extern void stopMainThread(void);
 extern void w2cExit(int code);
 extern void error(const char* description, const char* fileName, int line);

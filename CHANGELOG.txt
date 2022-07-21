@@ -1,6 +1,9 @@
--Added option to set constant color in grayscale mode - "--set-color".
+===Version 1.1===
+-Added "magnifier mode".
 -Added "--rand" option.
 -Added "--single-char" option.
+-Added option to set constant color in grayscale mode - "--set-color".
 -Removed "--enable-input" option ("--top-most" better).
 -Changes in scaling modes.
+-Better DPI awareness with multiple monitors.
 -Fix: wrong image ratio in Windows Terminal.

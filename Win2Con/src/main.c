@@ -7,6 +7,8 @@ int imgW = -1, imgH = -1;
 int conW = -1, conH = -1;
 int wndW = -1, wndH = -1;
 int argW = -1, argH = -1;
+int conWndX = -1, conWndY = -1;
+int conWndW = -1, conWndH = -1;
 int scaleXMul = 1, scaleYMul = 1;
 int scaleXDiv = 1, scaleYDiv = 1;
 int scaleWithRatio = 1;
@@ -25,6 +27,7 @@ int setColorVal = 0, setColorVal2 = -1;
 int singleCharMode = 0;
 int magnifierMode = 0;
 int brightnessRand = 0;
+int stopMainThreadVal = 0;
 
 void init(void)
 {
@@ -55,6 +58,12 @@ void loop(void)
 
 	while (1)
 	{
+		if (stopMainThreadVal)
+		{
+			stopMainThreadVal = 2;
+			while (1) { Sleep(20); }
+		}
+
 		if (reEnterHWND)
 		{
 			setDefaultColor();
@@ -67,8 +76,10 @@ void loop(void)
 		if ((curTime > lastRefresh + SIZE_REFRESH_PERIOD)
 			|| magnifierMode)
 		{
+			getConsoleInfo();
 			refreshWinSize();
 			refreshConSize();
+			refreshBitmapSize();
 			refreshScaling();
 			lastRefresh = curTime;
 		}

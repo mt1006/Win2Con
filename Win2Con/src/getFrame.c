@@ -2,14 +2,12 @@
 
 static HDC outputHDC, unscaledHDC, screenHDC;
 static uint8_t* bitmapArray = NULL;
-static int conWndX, conWndY;
-static int conWndW, conWndH;
 
 static uint8_t* setBitmap(HDC hdc, int w, int h);
 
 void initGetFrame(void)
 {
-	if (!ignoreDPI) { SetProcessDPIAware(); }
+	if (!ignoreDPI) { SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE); }
 
 	screenHDC = GetDC(NULL);
 	outputHDC = CreateCompatibleDC(screenHDC);
@@ -25,21 +23,8 @@ void initGetFrame(void)
 
 void refreshWinSize(void)
 {
-	static int oldConW = -1, oldConH = -1;
-	int oldWndW = wndW, oldWndH = wndH;
-
 	if (magnifierMode)
 	{
-		RECT wndRect;
-		GetClientRect(conHWND, &wndRect);
-		conWndW = wndRect.right;
-		conWndH = wndRect.bottom;
-
-		POINT clientAreaPos = { 0,0 };
-		ClientToScreen(conHWND, &clientAreaPos);
-		conWndX = clientAreaPos.x;
-		conWndY = clientAreaPos.y;
-
 		wndW = conWndW;
 		wndH = conWndH;
 	}
@@ -61,8 +46,23 @@ void refreshWinSize(void)
 		}
 	}
 
+}
+
+void refreshBitmapSize(void)
+{
+	static int oldConW = -1, oldConH = -1;
+	static int oldWndW = -1, oldWndH = -1;
+
 	if (scalingMode == SM_SOFT_FILL)
 	{
+		if (!magnifierMode)
+		{
+			if (wndW != oldWndW || wndH != oldWndH)
+			{
+				setBitmap(unscaledHDC, wndW, wndH);
+			}
+		}
+
 		if (conW != oldConW || conH != oldConH)
 		{
 			bitmapArray = setBitmap(outputHDC, conW, conH);
@@ -78,6 +78,8 @@ void refreshWinSize(void)
 
 	oldConW = conW;
 	oldConH = conH;
+	oldWndW = wndW;
+	oldWndH = wndH;
 }
 
 void getFrame(Frame* frame)
@@ -102,7 +104,7 @@ void getFrame(Frame* frame)
 		if (scalingMode == SM_SOFT_FILL)
 		{
 			PrintWindow(hwnd, unscaledHDC, pwMode);
-			StretchBlt(outputHDC, 0, 0, conW, conH, unscaledHDC, 0, 0, wndW, wndH, SRCCOPY);
+			StretchBlt(outputHDC, 0, 0, imgW, imgH, unscaledHDC, 0, 0, wndW, wndH, SRCCOPY);
 		}
 		else
 		{
