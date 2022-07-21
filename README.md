@@ -17,6 +17,10 @@ Browser in cmd [```-tm```]
 
 ![Github](screenshots/github.png "Github")
 
+Magnifier mode [```-m -sm soft-fill -sch -c cstd-rgb -r 50```]
+
+![Magnifier mode](screenshots/magnifier_mode.png "Magnifier mode")
+
 # List of basic options
 ```
  [none] / -i         Handle to input window (in hexadecimal).
