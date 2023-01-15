@@ -9,7 +9,7 @@ typedef struct
 
 static HANDLE inputHandle = NULL;
 static DWORD oldOutputMode, oldInputMode;
-static int outputModeChanged = 0;
+static bool outputModeChanged = false;
 static ConsoleInfo consoleInfo;
 
 static void drawWithWinAPI(Frame* frame);
@@ -20,18 +20,18 @@ void initDrawFrame(void)
 	inputHandle = GetStdHandle(STD_INPUT_HANDLE);
 
 	DWORD mode;
-	if (colorMode == CM_CSTD_16 ||
-		colorMode == CM_CSTD_256 ||
-		colorMode == CM_CSTD_RGB ||
-		setColorMode == SCM_CSTD_256 ||
-		setColorMode == SCM_CSTD_RGB)
+	if (settings.colorMode == CM_CSTD_16 ||
+		settings.colorMode == CM_CSTD_256 ||
+		settings.colorMode == CM_CSTD_RGB ||
+		settings.setColorMode == SCM_CSTD_256 ||
+		settings.setColorMode == SCM_CSTD_RGB)
 	{
 		GetConsoleMode(outputHandle, &mode);
 		oldOutputMode = mode;
 		mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 		SetConsoleMode(outputHandle, mode);
-		ansiEnabled = 1;
-		outputModeChanged = 1;
+		ansiEnabled = true;
+		outputModeChanged = true;
 	}
 
 	refreshConSize();
@@ -73,7 +73,7 @@ void getConsoleInfo(void)
 	}
 	else
 	{
-		if (magnifierMode)
+		if (settings.magnifierMode)
 		{
 			POINT clientAreaPos = { 0,0 };
 			ClientToScreen(conHWND, &clientAreaPos);
@@ -86,14 +86,14 @@ void getConsoleInfo(void)
 			RECT wtDragBarRect;
 			GetClientRect(wtDragBarHWND, &wtDragBarRect);
 			clientRect.bottom -= wtDragBarRect.bottom;
-			if (magnifierMode) { conWndY += wtDragBarRect.bottom; }
+			if (settings.magnifierMode) { conWndY += wtDragBarRect.bottom; }
 		}
 
 		fontRatio = ((double)clientRect.right / (double)fullConW) /
 			((double)clientRect.bottom / (double)fullConH);
 	}
 
-	if (magnifierMode)
+	if (settings.magnifierMode)
 	{
 		conWndW = clientRect.right;
 		conWndH = clientRect.bottom;
@@ -102,7 +102,7 @@ void getConsoleInfo(void)
 	if (fullConW < 4) { fullConW = 4; }
 	if (fullConH < 4) { fullConH = 4; }
 
-	if (colorMode != CM_WINAPI_GRAY && colorMode != CM_WINAPI_16) { fullConW--; }
+	if (settings.colorMode != CM_WINAPI_GRAY && settings.colorMode != CM_WINAPI_16) { fullConW--; }
 
 	consoleInfo.conW = fullConW;
 	consoleInfo.conH = fullConH;
@@ -111,58 +111,56 @@ void getConsoleInfo(void)
 
 void refreshConSize(void)
 {
-	static int firstCall = 1;
-	static int setNewSize = 0;
+	static bool firstCall = true;
 	static int lastWndW = 0, lastWndH = 0;
 
 	double newFR;
-	if (constFontRatio == 0.0) { newFR = consoleInfo.fontRatio; }
-	else { newFR = constFontRatio; }
+	if (settings.constFontRatio == 0.0) { newFR = consoleInfo.fontRatio; }
+	else { newFR = settings.constFontRatio; }
 
-	if (argW != -1 && argH != -1)
+	if (settings.argW != -1 && settings.argH != -1)
 	{
-		if (argW == 0 && argH == 0)
+		if (settings.argW == 0 && settings.argH == 0)
 		{
-			argW = consoleInfo.conW;
-			argH = consoleInfo.conH;
+			settings.argW = consoleInfo.conW;
+			settings.argH = consoleInfo.conH;
 		}
 
-		if ((scalingMode != SM_FILL && scalingMode != SM_SOFT_FILL) ||
-			!scaleWithRatio)
+		if ((settings.scalingMode != SM_FILL && settings.scalingMode != SM_SOFT_FILL) ||
+			!settings.scaleWithRatio)
 		{
 			fontRatio = newFR;
 			if (firstCall)
 			{
-				imgW = argW;
-				imgH = argH;
+				imgW = settings.argW;
+				imgH = settings.argH;
 			}
 		}
-		else if (lastWndW != wndW || lastWndH != wndH ||
-			fontRatio != newFR)
+		else if (lastWndW != wndW || lastWndH != wndH || fontRatio != newFR)
 		{
 			lastWndW = wndW;
 			lastWndH = wndH;
 			fontRatio = newFR;
 
 			double wndRatio = (double)wndW / (double)wndH;
-			double conRatio = ((double)argW / (double)argH) * fontRatio;
+			double conRatio = ((double)settings.argW / (double)settings.argH) * fontRatio;
 
 			if (wndRatio > conRatio)
 			{
-				imgW = argW;
-				imgH = (int)((conRatio / wndRatio) * argH);
+				imgW = settings.argW;
+				imgH = (int)((conRatio / wndRatio) * settings.argH);
 			}
 			else
 			{
-				imgW = (int)((wndRatio / conRatio) * argW);
-				imgH = argH;
+				imgW = (int)((wndRatio / conRatio) * settings.argW);
+				imgH = settings.argH;
 			}
 		}
 	}
 	else
 	{
-		if ((scalingMode != SM_FILL && scalingMode != SM_SOFT_FILL) ||
-			!scaleWithRatio)
+		if ((settings.scalingMode != SM_FILL && settings.scalingMode != SM_SOFT_FILL)
+			|| !settings.scaleWithRatio)
 		{
 			fontRatio = newFR;
 			if (conW != consoleInfo.conW || conH != consoleInfo.conH)
@@ -174,8 +172,7 @@ void refreshConSize(void)
 			}
 		}
 		else if (conW != consoleInfo.conW || conH != consoleInfo.conH ||
-			lastWndW != wndW || lastWndH != wndH ||
-			fontRatio != newFR)
+			lastWndW != wndW || lastWndH != wndH || fontRatio != newFR)
 		{
 			lastWndW = wndW;
 			lastWndH = wndH;
@@ -199,21 +196,22 @@ void refreshConSize(void)
 		}
 	}
 
-	if (firstCall) { firstCall = 0; }
+	firstCall = false;
 }
 
 void drawFrame(Frame* frame)
 {
 	static int scanline = 0;
 	static int lastW = 0, lastH = 0;
-	if ((lastW != imgW || lastH != imgH) && !disableCLS)
+	if ((lastW != imgW || lastH != imgH) && !settings.disableCLS)
 	{
 		lastW = imgW;
 		lastH = imgH;
 		clearScreen();
 	}
 
-	if (colorMode == CM_WINAPI_GRAY || colorMode == CM_WINAPI_16)
+	if (settings.colorMode == CM_WINAPI_GRAY ||
+		settings.colorMode == CM_WINAPI_16)
 	{
 		drawWithWinAPI(frame);
 		return;
@@ -224,26 +222,26 @@ void drawFrame(Frame* frame)
 	char* output = (char*)frame->output;
 	int* lineOffsets = frame->outputLineOffsets;
 
-	if (scanlineCount == 1)
+	if (settings.scanlineCount == 1)
 	{
-		if (!disableCLS) { setCursorPos(0, 0); }
+		if (!settings.disableCLS) { setCursorPos(0, 0); }
 		fwrite(output, 1, lineOffsets[imgH], stdout);
 	}
 	else
 	{
-		for (int i = 0; i < imgH; i += scanlineCount * scanlineHeight)
+		for (int i = 0; i < imgH; i += settings.scanlineCount * settings.scanlineHeight)
 		{
-			int sy = i + (scanline * scanlineHeight);
-			int sh = scanlineHeight;
+			int sy = i + (scanline * settings.scanlineHeight);
+			int sh = settings.scanlineHeight;
 			if (sy >= imgH) { break; }
 			else if (sy + sh > imgH) { sh = imgH - sy; }
 
-			if (!disableCLS) { setCursorPos(0, sy); }
+			if (!settings.disableCLS) { setCursorPos(0, sy); }
 			fwrite(output + lineOffsets[sy], 1, lineOffsets[sy + sh] - lineOffsets[sy], stdout);
 		}
 
 		scanline++;
-		if (scanline == scanlineCount) { scanline = 0; }
+		if (scanline == settings.scanlineCount) { scanline = 0; }
 	}
 }
 
@@ -253,7 +251,7 @@ static void drawWithWinAPI(Frame* frame)
 
 	CHAR_INFO* output = (CHAR_INFO*)frame->output;
 
-	if (scanlineCount == 1)
+	if (settings.scanlineCount == 1)
 	{
 		COORD charBufSize = { imgW,imgH };
 		COORD startCharPos = { 0,0 };
@@ -262,10 +260,10 @@ static void drawWithWinAPI(Frame* frame)
 	}
 	else
 	{
-		for (int i = 0; i < imgH; i += scanlineCount * scanlineHeight)
+		for (int i = 0; i < imgH; i += settings.scanlineCount * settings.scanlineHeight)
 		{
-			int sy = i + (scanline * scanlineHeight);
-			int sh = scanlineHeight;
+			int sy = i + (scanline * settings.scanlineHeight);
+			int sh = settings.scanlineHeight;
 			if (sy >= imgH) { break; }
 			else if (sy + sh > imgH) { sh = imgH - sy; }
 
@@ -277,7 +275,7 @@ static void drawWithWinAPI(Frame* frame)
 		}
 
 		scanline++;
-		if (scanline == scanlineCount) { scanline = 0; }
+		if (scanline == settings.scanlineCount) { scanline = 0; }
 	}
 }
 
@@ -288,31 +286,31 @@ void restoreConsoleMode()
 
 static void setConstColor(void)
 {
-	switch (setColorMode)
+	switch (settings.setColorMode)
 	{
 	case SCM_WINAPI:
-		SetConsoleTextAttribute(outputHandle, (WORD)setColorVal);
+		SetConsoleTextAttribute(outputHandle, (WORD)settings.setColorVal);
 		break;
 
 	case SCM_CSTD_256:
-		printf("\x1B[38;5;%dm", setColorVal);
-		if (setColorVal2 != -1)
+		printf("\x1B[38;5;%dm", settings.setColorVal);
+		if (settings.setColorVal2 != -1)
 		{
-			printf("\x1B[48;5;%dm", setColorVal2);
+			printf("\x1B[48;5;%dm", settings.setColorVal2);
 		}
 		break;
 
 	case SCM_CSTD_RGB:
 		printf("\x1B[38;2;%d;%d;%dm",
-			(setColorVal & 0xFF0000) >> 16,
-			(setColorVal & 0x00FF00) >> 8,
-			setColorVal & 0x0000FF);
-		if (setColorVal2 != -1)
+			(settings.setColorVal & 0xFF0000) >> 16,
+			(settings.setColorVal & 0x00FF00) >> 8,
+			settings.setColorVal & 0x0000FF);
+		if (settings.setColorVal2 != -1)
 		{
 			printf("\x1B[48;2;%d;%d;%dm",
-				(setColorVal2 & 0xFF0000) >> 16,
-				(setColorVal2 & 0x00FF00) >> 8,
-				setColorVal2 & 0x0000FF);
+				(settings.setColorVal2 & 0xFF0000) >> 16,
+				(settings.setColorVal2 & 0x00FF00) >> 8,
+				settings.setColorVal2 & 0x0000FF);
 		}
 		break;
 	}

@@ -20,19 +20,19 @@ static void getPathAndCheckFile(const wchar_t* filename, wchar_t* buf, int bufLe
 
 void enableMagnifierMode(void)
 {
-	if (!magnifierMode)
+	if (!settings.magnifierMode)
 	{
 		getConsoleWindow();
 		setConsoleDisplayAffinity(0);
-		magnifierMode = 1;
+		settings.magnifierMode = true;
 	}
 }
 
 void disableMagnifierMode(void)
 {
-	if (magnifierMode)
+	if (settings.magnifierMode)
 	{
-		magnifierMode = 0;
+		settings.magnifierMode = false;
 		setConsoleDisplayAffinity(1);
 	}
 }
@@ -134,11 +134,11 @@ static void injectDLL(DWORD pid, const wchar_t* dllName)
 	if (!memForStr) { error("Unable to allocate memory for DLL string!", "magnifierMode.c", __LINE__); }
 	WriteProcessMemory(procHandle, memForStr, dllName, dllNameLen, NULL);
 
-	HANDLE threadHandle = CreateRemoteThread(procHandle, NULL, NULL,
+	HANDLE threadHandle = CreateRemoteThread(procHandle, NULL, 0,
 		(LPTHREAD_START_ROUTINE)loadLibAddress, memForStr, 0, NULL);
 	if (!threadHandle) { error("Unable to create remote thread!", "magnifierMode.c", __LINE__); }
 	WaitForSingleObject(threadHandle, INFINITE);
-	VirtualFreeEx(procHandle, memForStr, dllNameLen, MEM_RELEASE);
+	VirtualFreeEx(procHandle, memForStr, 0, MEM_RELEASE);
 	CloseHandle(threadHandle);
 
 	freeInjectedDLL(procHandle, dllName);
@@ -172,7 +172,7 @@ static void freeInjectedDLL(HANDLE procHandle, const wchar_t* dllName)
 					HMODULE moduleHandle = GetModuleHandleA("kernel32.dll");
 					void* freeLibAddress = GetProcAddress(moduleHandle, "FreeLibrary");
 
-					HANDLE threadHandle = CreateRemoteThread(procHandle, NULL, NULL,
+					HANDLE threadHandle = CreateRemoteThread(procHandle, NULL, 0,
 						(LPTHREAD_START_ROUTINE)freeLibAddress, modules[i], 0, NULL);
 					WaitForSingleObject(threadHandle, INFINITE);
 					CloseHandle(threadHandle);

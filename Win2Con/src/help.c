@@ -2,17 +2,15 @@
 
 static void helpBasicOptions(void);
 static void helpAdvancedOptions(void);
-static void helpColorModes(void);
-static void helpScalingModes(void);
+static void helpModes(void);
 static void helpKeyboard(void);
 
-void showHelp(int basic, int advanced, int colorModes, int scalingModes, int keyboard)
+void showHelp(bool basic, bool advanced, bool modes, bool keyboard)
 {
 	puts("Win2Con - Help\n");
 	if (basic) { helpBasicOptions(); }
 	if (advanced) { helpAdvancedOptions(); }
-	if (colorModes) { helpColorModes(); }
-	if (scalingModes) { helpScalingModes(); }
+	if (modes) { helpModes(); }
 	if (keyboard) { helpKeyboard(); }
 }
 
@@ -87,7 +85,7 @@ static void helpBasicOptions(void)
 		" -inf(--information) Information about Win2Con.\n"
 		" -v  (--version)     Information about Win2Con version.\n"
 		" -h <topic>          Displays help message.\n"
-		"  (--help)           Topics: basic, advanced, color-modes, scaling-modes, keyboard, full\n");
+		"  (--help)           Topics: basic, advanced, modes, keyboard, full\n");
 }
 
 static void helpAdvancedOptions(void)
@@ -102,6 +100,10 @@ static void helpAdvancedOptions(void)
 		"                     Examples:\n"
 		"                      win2con -int 2\n"
 		"                      win2con -int 4 3\n"
+		" -cp [mode]          Sets color processing mode\n"
+		"  (--color-proc)     To get list of all avaible modes use \"win2con -h modes\".\n"
+		"                     Examples:\n"
+		"                      win2con -c cstd-rgb -cp none\n"
 		" -sc [value]         Sets constant color in grayscale mode.\n"
 		"  (--set-color)      Only number - sets text attribute using WinAPI.\n"
 		"                     \"@color\" - sets color from ANSI 256 palette (only cstd-gray).\n"
@@ -119,14 +121,10 @@ static void helpAdvancedOptions(void)
 		"                     Examples:\n"
 		"                      win2con -ch #blocks\n"
 		"                      win2con -ch my_charset.txt\n"
-		" -sch                Uses single character to draw image and sets it's color to original,\n"
-		"  (--single-char)    instead of recalculated. Requires colors!\n"
-		"                     Examples:\n"
-		"                      win2con -c cstd-rgb -sch\n"
 		" -r [val]            Randomly increases or decreases pixel brightness by a random value\n"
-		"  (--rand)           between 0 and val/2. When \"single char\" mode is enabled or \"@\" sign\n"
-		"                     is placed before the number, brightness is decreased by a random value\n"
-		"                     between 0 and val.\n"
+		"  (--rand)           between 0 and val/2. When color processing mode is set to \"none\" or\n"
+		"                     \"@\" sign is placed before the number, brightness is decreased by\n"
+		"                     a random value between 0 and val.\n"
 		"                     Examples:\n"
 		"                      win2con -r 20\n"
 		"                      win2con -r @40\n"
@@ -146,7 +144,7 @@ static void helpAdvancedOptions(void)
 		" -fi (--full-info)   Full info about Win2Con.\n");
 }
 
-static void helpColorModes(void)
+static void helpModes(void)
 {
 	puts(
 		"Color modes:\n"
@@ -154,18 +152,26 @@ static void helpColorModes(void)
 		" >winapi-16\n"
 		" >cstd-gray\n"
 		" >cstd-16\n"
-		" >cstd-256 (default)\n"
+		" >cstd-256 [default]\n"
 		" >cstd-rgb\n");
+
+	puts(
+		"Color processing modes:\n"
+		" >none - keeps original color and uses single character.\n"
+		" >char-only - uses character according to luminance but doesn't change color.\n"
+		" >both - uses character according to luminance and changes color so that\n"
+		"         its largest component is equal to 255. [default]");
+
+	puts(
+		"Scaling modes:\n"
+		" >fill <keep-ratio> [default, with enabled keeping ratio]\n"
+		" >soft-fill <keep-ratio>\n"
+		" >const (x) (y)\n"
+		" >no-scaling <keep-ratio>\n");
 }
 
 static void helpScalingModes(void)
 {
-	puts(
-		"Scaling modes:\n"
-		" >fill <keep-ratio> (default, with enabled keeping ratio)\n"
-		" >soft-fill <keep-ratio>\n"
-		" >const [x] [y]\n"
-		" >no-scaling <keep-ratio>\n");
 }
 
 static void helpKeyboard(void)

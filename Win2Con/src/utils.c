@@ -82,7 +82,7 @@ void setDefaultColor(void)
 	{
 		fputs("\x1B[0m", stdout);
 	}
-	else if (setColorMode == SCM_WINAPI)
+	else if (settings.setColorMode == SCM_WINAPI)
 	{
 		#ifdef _WIN32
 		SetConsoleTextAttribute(outputHandle,
@@ -93,7 +93,7 @@ void setDefaultColor(void)
 
 void setConsoleTopMost(int topMost)
 {
-	static int isTopMost = 0;
+	static bool isTopMost = false;
 	getConsoleWindow();
 
 	if (topMost == -1) { topMost = !isTopMost; }
@@ -107,7 +107,7 @@ void setConsoleTopMost(int topMost)
 		exStyle |= WS_EX_TRANSPARENT;
 		SetWindowLongPtrA(conHWND, GWL_EXSTYLE, exStyle);
 
-		isTopMost = 1;
+		isTopMost = true;
 	}
 	else if (!topMost && isTopMost)
 	{
@@ -118,14 +118,14 @@ void setConsoleTopMost(int topMost)
 		exStyle &= ~WS_EX_TRANSPARENT;
 		SetWindowLongPtrA(conHWND, GWL_EXSTYLE, exStyle);
 
-		isTopMost = 0;
+		isTopMost = true;
 	}
 }
 
 void setCursorPos(int x, int y)
 {
 	COORD cursor = { (SHORT)x,(SHORT)y };
-	if (!disableCLS) { SetConsoleCursorPosition(outputHandle, cursor); }
+	if (!settings.disableCLS) { SetConsoleCursorPosition(outputHandle, cursor); }
 }
 
 size_t getOutputArraySize(void)
@@ -134,7 +134,7 @@ size_t getOutputArraySize(void)
 	const int CSTD_256_CODE_LEN = 12; // "\x1B[38;5;???m?"
 	const int CSTD_RGB_CODE_LEN = 20; // "\x1B[38;2;???;???;???m?"
 
-	switch (colorMode)
+	switch (settings.colorMode)
 	{
 	case CM_CSTD_GRAY:
 		return (imgW + 1) * imgH * sizeof(char);

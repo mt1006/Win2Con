@@ -7,14 +7,14 @@ static uint8_t* setBitmap(HDC hdc, int w, int h);
 
 void initGetFrame(void)
 {
-	if (!ignoreDPI) { SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE); }
+	if (!settings.ignoreDPI) { SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE); }
 
 	screenHDC = GetDC(NULL);
 	outputHDC = CreateCompatibleDC(screenHDC);
 
-	if (scalingMode == SM_SOFT_FILL)
+	if (settings.scalingMode == SM_SOFT_FILL)
 	{
-		if (!magnifierMode) { unscaledHDC = CreateCompatibleDC(screenHDC); }
+		if (!settings.magnifierMode) { unscaledHDC = CreateCompatibleDC(screenHDC); }
 		SetStretchBltMode(outputHDC, HALFTONE);
 	}
 
@@ -23,7 +23,7 @@ void initGetFrame(void)
 
 void refreshWinSize(void)
 {
-	if (magnifierMode)
+	if (settings.magnifierMode)
 	{
 		wndW = conWndW;
 		wndH = conWndH;
@@ -32,7 +32,7 @@ void refreshWinSize(void)
 	{
 		RECT wndRect;
 
-		if (pwClientArea)
+		if (settings.printClientArea)
 		{
 			GetClientRect(hwnd, &wndRect);
 			wndW = wndRect.right;
@@ -53,9 +53,9 @@ void refreshBitmapSize(void)
 	static int oldConW = -1, oldConH = -1;
 	static int oldWndW = -1, oldWndH = -1;
 
-	if (scalingMode == SM_SOFT_FILL)
+	if (settings.scalingMode == SM_SOFT_FILL)
 	{
-		if (!magnifierMode)
+		if (!settings.magnifierMode)
 		{
 			if (wndW != oldWndW || wndH != oldWndH)
 			{
@@ -84,34 +84,37 @@ void refreshBitmapSize(void)
 
 void getFrame(Frame* frame)
 {
-	if (magnifierMode)
+	if (settings.magnifierMode)
 	{
-		if (scalingMode == SM_SOFT_FILL)
+		if (settings.scalingMode == SM_SOFT_FILL)
 		{
-			StretchBlt(outputHDC, 0, 0, conW, conH, screenHDC, conWndX, conWndY, conWndW, conWndH, SRCCOPY);
+			StretchBlt(outputHDC, 0, 0, conW, conH, screenHDC,
+				conWndX, conWndY, conWndW, conWndH, SRCCOPY);
 		}
 		else
 		{
-			BitBlt(outputHDC, 0, 0, wndW, wndH, screenHDC, conWndX, conWndY, SRCCOPY);
+			int x = conWndX + (int)round(((double)wndW / (double)conW) / 2.0);
+			int y = conWndY + (int)round(((double)wndH / (double)conH) / 2.0);
+			BitBlt(outputHDC, 0, 0, wndW, wndH, screenHDC, x, y, SRCCOPY);
 		}
 	}
 	else
 	{
-		UINT pwMode;
-		if (pwClientArea) { pwMode = PW_CLIENTONLY; }
-		else { pwMode = PW_RENDERFULLCONTENT; }
+		UINT printMode;
+		if (settings.printClientArea) { printMode = PW_CLIENTONLY; }
+		else { printMode = PW_RENDERFULLCONTENT; }
 
-		if (scalingMode == SM_SOFT_FILL)
+		if (settings.scalingMode == SM_SOFT_FILL)
 		{
-			PrintWindow(hwnd, unscaledHDC, pwMode);
+			PrintWindow(hwnd, unscaledHDC, printMode);
 			StretchBlt(outputHDC, 0, 0, imgW, imgH, unscaledHDC, 0, 0, wndW, wndH, SRCCOPY);
 		}
 		else
 		{
-			PrintWindow(hwnd, outputHDC, pwMode);
+			PrintWindow(hwnd, outputHDC, printMode);
 		}
 
-		if (!IsWindow(hwnd)) { reEnterHWND = 1; }
+		if (!IsWindow(hwnd)) { reEnterHWND = true; }
 	}
 
 	frame->bitmapArray = bitmapArray;
@@ -134,8 +137,7 @@ static uint8_t* setBitmap(HDC hdc, int w, int h)
 	bmpInfo.bmiHeader.biHeight = h;
 	bmpInfo.bmiHeader.biSizeImage = w * h * 3;
 
-	HBITMAP bitmap = CreateDIBSection(hdc, &bmpInfo,
-		DIB_RGB_COLORS, (void**)&bmpArray, 0, 0);
+	HBITMAP bitmap = CreateDIBSection(hdc, &bmpInfo, DIB_RGB_COLORS, (void**)&bmpArray, 0, 0);
 	HGDIOBJ oldObj = SelectObject(hdc, bitmap);
 	if (oldObj) { DeleteObject(oldObj); }
 

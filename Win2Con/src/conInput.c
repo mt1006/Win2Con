@@ -14,7 +14,7 @@ static BOOL WINAPI consoleCtrlHandler(DWORD ctrlType);
 void initConInput(void)
 {
 	SetConsoleCtrlHandler(&consoleCtrlHandler, TRUE);
-	if (!disableKeyboard)
+	if (!settings.disableKeyboard)
 	{
 		conThreadID = _beginthread(&conThread, 0, NULL);
 	}
@@ -47,12 +47,9 @@ static ThreadRetType CALL_CONV conThread(void* ptr)
 static void conKeyEvent(KEY_EVENT_RECORD keyEvent)
 {
 	if ((keyEvent.dwControlKeyState & RIGHT_ALT_PRESSED) &&
-		!disableKeyboard)
+		!settings.disableKeyboard && keyEvent.bKeyDown)
 	{
-		if (keyEvent.bKeyDown)
-		{
-			keyboardControl(keyEvent.wVirtualKeyCode);
-		}
+		keyboardControl(keyEvent.wVirtualKeyCode);
 	}
 	return;
 }
@@ -62,7 +59,7 @@ static void keyboardControl(WORD vkCode)
 	switch (vkCode)
 	{
 	case 'Q':
-		if (magnifierMode)
+		if (settings.magnifierMode)
 		{
 			stopMainThread();
 			w2cExit(0);
@@ -79,7 +76,7 @@ static void keyboardControl(WORD vkCode)
 		break;
 
 	case 'C':
-		pwClientArea = !pwClientArea;
+		settings.printClientArea = !settings.printClientArea;
 		break;
 
 	case 'T':

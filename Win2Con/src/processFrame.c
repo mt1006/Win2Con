@@ -10,14 +10,9 @@ static const uint8_t CMD_COLORS_16[16][3] =
 };
 
 static void processForWinAPI(Frame* frame);
-static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b, int withColors);
-static uint8_t findNearestColor16(uint8_t r, uint8_t g, uint8_t b);
+static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b, bool withColors);
 static void procRand(uint8_t* val);
-
-void initProcessFrame(void)
-{
-	return;
-}
+static uint8_t findNearestColor16(uint8_t r, uint8_t g, uint8_t b);
 
 void refreshScaling(void)
 {
@@ -28,10 +23,10 @@ void refreshScaling(void)
 		return;
 	}
 
-	switch (scalingMode)
+	switch (settings.scalingMode)
 	{
 	case SM_NO_SCALING:
-		if (scaleWithRatio)
+		if (settings.scaleWithRatio)
 		{
 			if (fontRatio > 1.0)
 			{
@@ -82,7 +77,8 @@ void processFrame(Frame* frame)
 		frame->outputLineOffsets = malloc((imgH + 1) * sizeof(int));
 	}
 
-	if (colorMode == CM_WINAPI_GRAY || colorMode == CM_WINAPI_16)
+	if (settings.colorMode == CM_WINAPI_GRAY ||
+		settings.colorMode == CM_WINAPI_16)
 	{
 		processForWinAPI(frame);
 		return;
@@ -92,7 +88,7 @@ void processFrame(Frame* frame)
 	frame->outputLineOffsets[0] = 0;
 
 	int bmpW, bmpH;
-	if (scalingMode == SM_SOFT_FILL)
+	if (settings.scalingMode == SM_SOFT_FILL)
 	{
 		bmpW = conW;
 		bmpH = conH;
@@ -108,7 +104,7 @@ void processFrame(Frame* frame)
 	{
 		uint8_t oldColor = -1;
 		uint8_t oldR = -1, oldG = -1, oldB = -1;
-		int isFirstChar = 1;
+		bool isFirstChar = true;
 
 		int offset = frame->outputLineOffsets[i];
 
@@ -128,22 +124,22 @@ void processFrame(Frame* frame)
 
 			uint8_t val, color;
 
-			if (colorMode == CM_CSTD_GRAY)
+			if (settings.colorMode == CM_CSTD_GRAY)
 			{
 				val = procColor(&valR, &valG, &valB, 0);
 			}
 			else
 			{
-				if (singleCharMode) { val = 255; }
+				if (settings.colorProcMode == CPM_NONE) { val = 255; }
 				else { val = procColor(&valR, &valG, &valB, 1); }
 			}
 
-			if (brightnessRand) { procRand(&val); }
+			if (settings.brightnessRand) { procRand(&val); }
 
-			switch (colorMode)
+			switch (settings.colorMode)
 			{
 			case CM_CSTD_GRAY:
-				output[offset] = charset[(val * charsetSize) / 256];
+				output[offset] = settings.charset[(val * settings.charsetSize) / 256];
 				offset++;
 				break;
 
@@ -155,7 +151,7 @@ void processFrame(Frame* frame)
 
 				if (color == oldColor && !isFirstChar)
 				{
-					output[offset] = charset[(val * charsetSize) / 256];
+					output[offset] = settings.charset[(val * settings.charsetSize) / 256];
 					offset++;
 					break;
 				}
@@ -166,7 +162,7 @@ void processFrame(Frame* frame)
 				output[offset + 2] = (char)(((color / 10) % 10) + 0x30);
 				output[offset + 3] = (char)((color % 10) + 0x30);
 				output[offset + 4] = 'm';
-				output[offset + 5] = charset[(val * charsetSize) / 256];
+				output[offset + 5] = settings.charset[(val * settings.charsetSize) / 256];
 
 				offset += 6;
 				break;
@@ -176,7 +172,7 @@ void processFrame(Frame* frame)
 
 				if (color == oldColor && !isFirstChar)
 				{
-					output[offset] = charset[(val * charsetSize) / 256];
+					output[offset] = settings.charset[(val * settings.charsetSize) / 256];
 					offset++;
 					break;
 				}
@@ -193,7 +189,7 @@ void processFrame(Frame* frame)
 				output[offset + 8] = (char)(((color / 10) % 10) + 0x30);
 				output[offset + 9] = (char)((color % 10) + 0x30);
 				output[offset + 10] = 'm';
-				output[offset + 11] = charset[(val * charsetSize) / 256];
+				output[offset + 11] = settings.charset[(val * settings.charsetSize) / 256];
 
 				offset += 12;
 				break;
@@ -201,7 +197,7 @@ void processFrame(Frame* frame)
 			case CM_CSTD_RGB:
 				if (valR == oldR && valG == oldG && valB == oldB && !isFirstChar)
 				{
-					output[offset] = charset[(val * charsetSize) / 256];
+					output[offset] = settings.charset[(val * settings.charsetSize) / 256];
 					offset++;
 					break;
 				}
@@ -228,15 +224,15 @@ void processFrame(Frame* frame)
 				output[offset + 16] = (char)(((valB / 10) % 10) + 0x30);
 				output[offset + 17] = (char)((valB % 10) + 0x30);
 				output[offset + 18] = 'm';
-				output[offset + 19] = charset[(val * charsetSize) / 256];
+				output[offset + 19] = settings.charset[(val * settings.charsetSize) / 256];
 
 				offset += 20;
 				break;
 			}
 
-			isFirstChar = 0;
+			isFirstChar = false;
 
-			if (scalingMode == SM_FILL)
+			if (settings.scalingMode == SM_FILL)
 			{
 				bmpJ = j * bmpW / imgW;
 			}
@@ -254,7 +250,7 @@ void processFrame(Frame* frame)
 		output[offset] = '\n';
 		frame->outputLineOffsets[i + 1] = offset + 1;
 
-		if (scalingMode == SM_FILL)
+		if (settings.scalingMode == SM_FILL)
 		{
 			bmpI = bmpH - (i * bmpH / imgH) - 1;
 		}
@@ -269,7 +265,7 @@ void processFrame(Frame* frame)
 		}
 	}
 
-	if (!disableCLS)
+	if (!settings.disableCLS)
 	{
 		output[frame->outputLineOffsets[imgH] - 1] = '\0';
 		frame->outputLineOffsets[imgH]--;
@@ -281,7 +277,7 @@ static void processForWinAPI(Frame* frame)
 	CHAR_INFO* output = (CHAR_INFO*)frame->output;
 
 	int bmpW, bmpH;
-	if (scalingMode == SM_SOFT_FILL)
+	if (settings.scalingMode == SM_SOFT_FILL)
 	{
 		bmpW = conW;
 		bmpH = conH;
@@ -311,20 +307,20 @@ static void processForWinAPI(Frame* frame)
 
 			uint8_t val;
 
-			if (colorMode == CM_WINAPI_16)
+			if (settings.colorMode == CM_WINAPI_16)
 			{
-				if (singleCharMode) { val = 255; }
-				else { val = procColor(&valR, &valG, &valB, 1); }
+				if (settings.colorProcMode == CPM_NONE) { val = 255; }
+				else { val = procColor(&valR, &valG, &valB, true); }
 
 				output[(i * imgW) + j].Attributes = findNearestColor16(valR, valG, valB);
 			}
 			else
 			{
-				val = procColor(&valR, &valG, &valB, 0);
+				val = procColor(&valR, &valG, &valB, false);
 
-				if (setColorMode == SCM_WINAPI)
+				if (settings.setColorMode == SCM_WINAPI)
 				{
-					output[(i * imgW) + j].Attributes = setColorVal;
+					output[(i * imgW) + j].Attributes = settings.setColorVal;
 				}
 				else
 				{
@@ -333,11 +329,12 @@ static void processForWinAPI(Frame* frame)
 				}
 			}
 
-			if (brightnessRand) { procRand(&val); }
+			if (settings.brightnessRand) { procRand(&val); }
 
-			output[(i * imgW) + j].Char.AsciiChar = charset[(val * charsetSize) / 256];
+			output[(i * imgW) + j].Char.AsciiChar =
+				settings.charset[(val * settings.charsetSize) / 256];
 
-			if (scalingMode == SM_FILL)
+			if (settings.scalingMode == SM_FILL)
 			{
 				bmpJ = j * bmpW / imgW;
 			}
@@ -352,7 +349,7 @@ static void processForWinAPI(Frame* frame)
 			}
 		}
 
-		if (scalingMode == SM_FILL)
+		if (settings.scalingMode == SM_FILL)
 		{
 			bmpI = bmpH - (i * bmpH / imgH) - 1;
 		}
@@ -368,12 +365,12 @@ static void processForWinAPI(Frame* frame)
 	}
 }
 
-static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b, int withColors)
+static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b, bool withColors)
 {
 	uint8_t valR = *r, valG = *g, valB = *b;
 	uint8_t retVal = (uint8_t)((double)valR * 0.299 + (double)valG * 0.587 + (double)valB * 0.114);
 
-	if (withColors)
+	if (withColors && settings.colorProcMode == CPM_BOTH)
 	{
 		if (!valR) { valR = 1; }
 		if (!valG) { valG = 1; }
@@ -402,6 +399,35 @@ static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b, int withColors)
 	return retVal;
 }
 
+static void procRand(uint8_t* val)
+{
+	if (settings.colorProcMode == CPM_NONE)
+	{
+		*val -= rand() % (settings.brightnessRand + 1);
+	}
+	else
+	{
+		if (settings.brightnessRand > 0)
+		{
+			int tempVal = (int)(*val) +
+				(rand() % (settings.brightnessRand + 1)) -
+				(settings.brightnessRand / 2);
+
+			if (tempVal >= 255) { *val = 255; }
+			else if (tempVal <= 0) { *val = 0; }
+			else { *val = (uint8_t)tempVal; }
+		}
+		else
+		{
+			int tempVal = (int)(*val) -
+				(rand() % (-settings.brightnessRand + 1));
+
+			if (tempVal <= 0) { *val = 0; }
+			else { *val = (uint8_t)tempVal; }
+		}
+	}
+}
+
 static uint8_t findNearestColor16(uint8_t r, uint8_t g, uint8_t b)
 {
 	int min = INT_MAX;
@@ -418,30 +444,4 @@ static uint8_t findNearestColor16(uint8_t r, uint8_t g, uint8_t b)
 		}
 	}
 	return (uint8_t)minPos;
-}
-
-static void procRand(uint8_t* val)
-{
-	if (singleCharMode)
-	{
-		*val -= rand() % (brightnessRand + 1);
-	}
-	else
-	{
-		if (brightnessRand > 0)
-		{
-			int tempVal = (int)(*val) + (rand() % (brightnessRand + 1)) - (brightnessRand / 2);
-
-			if (tempVal >= 255) { *val = 255; }
-			else if (tempVal <= 0) { *val = 0; }
-			else { *val = (uint8_t)tempVal; }
-		}
-		else
-		{
-			int tempVal = (int)(*val) - (rand() % (-brightnessRand + 1));
-
-			if (tempVal <= 0) { *val = 0; }
-			else { *val = (uint8_t)tempVal; }
-		}
-	}
 }

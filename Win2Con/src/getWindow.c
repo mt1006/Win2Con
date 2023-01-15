@@ -5,12 +5,12 @@
 #define W2C_MAX_WND_COUNT 2048
 
 static int currentPos;
-static int checkIfAltTab;
+static bool checkIfAltTab;
 static HWND* hwndArray;
 static int hwndArrayPos;
 
 static long long menuInput(const char* prompt);
-static void printWindowList(int full, HWND parent);
+static void printWindowList(bool showFullList, HWND parent);
 static int printWindowInfo(HWND hwnd, int pos);
 static int isAltTabWindow(HWND hwnd);
 static BOOL CALLBACK enumWindowsProc(HWND hwnd, LPARAM lParam);
@@ -23,14 +23,14 @@ static void freeParsedArgs(char** argv);
 HWND getWindow(void)
 {
 	HWND selectedHWND = NULL;
+	bool showFullList = false;
 	hwndArray = (HWND*)malloc(W2C_MAX_WND_COUNT * sizeof(HWND));
 
-	int fullList = 0;
 	while (1)
 	{
 		clearScreen();
 		puts("Select window:\n");
-		printWindowList(fullList, NULL);
+		printWindowList(showFullList, NULL);
 
 		fflush(stdout);
 		int selection = (int)menuInput(":");
@@ -42,7 +42,7 @@ HWND getWindow(void)
 		}
 		else if (selection == currentPos)
 		{
-			fullList = !fullList;
+			showFullList = !showFullList;
 			continue;
 		}
 		else if (selection == currentPos + 1)
@@ -84,24 +84,25 @@ static long long menuInput(const char* prompt)
 	fputs(prompt, stdout);
 	fgets(inputStr, W2C_MAX_INPUT_LEN, stdin);
 
-	int argc, exitReq;
+	int argc;
+	bool exitReq;
 	char** argv = parsedArgs(inputStr, &argc);
-	long long retVal = argumentParser(argc, argv, &exitReq, 1);
+	long long retVal = argumentParser(argc, argv, &exitReq, true);
 	freeParsedArgs(argv);
 
 	if (exitReq) { w2cExit(0); }
 	return retVal;
 }
 
-static void printWindowList(int full, HWND parent)
+static void printWindowList(bool showFullList, HWND parent)
 {
 	currentPos = 1;
-	if (full) { checkIfAltTab = 0; }
-	else { checkIfAltTab = 1; }
+	if (showFullList) { checkIfAltTab = false; }
+	else { checkIfAltTab = true; }
 
 	EnumWindows(&enumWindowsProc, NULL);
 
-	if (full) { printf("%d. (Show list of visible)\n", currentPos); }
+	if (showFullList) { printf("%d. (Show list of visible)\n", currentPos); }
 	else { printf("%d. (Show full list)\n", currentPos); }
 
 	printf("%d. (From handle)\n", currentPos + 1);

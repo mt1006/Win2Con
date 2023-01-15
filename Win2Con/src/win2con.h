@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <time.h>
 
 #include <process.h>
@@ -39,6 +40,7 @@
 #define W2C_DEFAULT_COLOR_MODE CM_CSTD_256
 #define W2C_DEFAULT_SCALING_MODE SM_FILL
 
+
 typedef enum
 {
 	CM_WINAPI_GRAY,
@@ -65,6 +67,13 @@ typedef enum
 	SCM_CSTD_RGB
 } SetColorMode;
 
+typedef enum
+{
+	CPM_NONE,
+	CPM_CHAR_ONLY,
+	CPM_BOTH
+} ColorProcMode;
+
 typedef struct
 {
 	uint8_t* bitmapArray;
@@ -72,37 +81,45 @@ typedef struct
 	int* outputLineOffsets;
 } Frame;
 
+typedef struct
+{
+	int argW, argH;
+	bool scaleWithRatio;
+	bool printClientArea;
+	ColorMode colorMode;
+	ScalingMode scalingMode;
+	int scanlineCount, scanlineHeight;
+	const char* charset;
+	int charsetSize;
+	double constFontRatio;
+	SetColorMode setColorMode;
+	int setColorVal, setColorVal2;
+	ColorProcMode colorProcMode;
+	int brightnessRand;
+	bool magnifierMode;
+	bool disableKeyboard;
+	bool disableCLS;
+	bool ignoreDPI;
+} Settings;
+
+
 extern HWND hwnd;
 extern HANDLE outputHandle;
 extern HWND conHWND, wtDragBarHWND;
 extern int imgW, imgH;
 extern int conW, conH;
 extern int wndW, wndH;
-extern int argW, argH;
-extern int conWndX, conWndY;
-extern int conWndW, conWndH;
-extern int scaleXMul, scaleYMul;
-extern int scaleXDiv, scaleYDiv;
-extern int scaleWithRatio;
-extern int pwClientArea;
-extern ColorMode colorMode;
-extern ScalingMode scalingMode;
-extern int scanlineCount, scanlineHeight;
-extern char* charset;
-extern int charsetSize;
-extern double fontRatio, constFontRatio;
-extern int disableKeyboard, disableCLS, ignoreDPI;
-extern int reEnterHWND;
-extern int ansiEnabled;
-extern SetColorMode setColorMode;
-extern int setColorVal, setColorVal2;
-extern int singleCharMode;
-extern int magnifierMode;
-extern int brightnessRand;
+extern double fontRatio;
+extern int conWndX, conWndY, conWndW, conWndH;
+extern int scaleXMul, scaleYMul, scaleXDiv, scaleYDiv;
+extern bool reEnterHWND;
+extern bool ansiEnabled;
 extern int stopMainThreadVal;
+extern Settings settings;
+
 
 //argParser.c
-extern long long argumentParser(int argc, char** argv, int* exitReq, int fromGetWindow);
+extern long long argumentParser(int argc, char** argv, bool* exitReq, bool fromGetWindow);
 
 //getWindow.c
 extern HWND getWindow(void);
@@ -114,7 +131,6 @@ extern void refreshBitmapSize(void);
 extern void getFrame(Frame* frame);
 
 //processFrame.c
-extern void initProcessFrame(void);
 extern void refreshScaling(void);
 extern void processFrame(Frame* frame);
 
@@ -133,7 +149,7 @@ extern void enableMagnifierMode(void);
 extern void disableMagnifierMode(void);
 
 //help.c
-extern void showHelp(int basic, int advanced, int colorModes, int scalingModes, int keyboard);
+extern void showHelp(bool basic, bool advanced, bool modes, bool keyboard);
 extern void showInfo(void);
 extern void showFullInfo(void);
 extern void showVersion(void);
