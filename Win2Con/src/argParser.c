@@ -32,6 +32,7 @@ static int opSetColor(int argc, char** argv);
 static int opCharset(int argc, char** argv);
 static int opRand(int argc, char** argv);
 static int opFontRatio(int argc, char** argv);
+static int opFakeConsole(int argc, char** argv);
 static int opDisableCLS(int argc, char** argv);
 static int opDisableKeys(int argc, char** argv);
 static int opIgnoreDPI(int argc, char** argv);
@@ -55,6 +56,7 @@ const Option OPTIONS[] = {
 	{"-cs","--charset",&opCharset,false},
 	{"-r","--rand",&opRand,false},
 	{"-fr","--font-ratio",&opFontRatio,false},
+	{"-fc","--fake-console",&opFakeConsole,false},
 	{"-dcls","--disable-cls",&opDisableCLS,false},
 	{"-dk","--disable-keys",&opDisableKeys,false},
 	{"-idpi","--ignore-dpi",&opIgnoreDPI,false},
@@ -502,6 +504,12 @@ static int opFontRatio(int argc, char** argv)
 	settings.constFontRatio = atof(argv[0]);
 	if (settings.constFontRatio <= 0.0) { error("Invalid font ratio!", "argParser.c", __LINE__); }
 	return 1;
+}
+
+static int opFakeConsole(int argc, char** argv)
+{
+	settings.useFakeConsole = true;
+	return 0;
 }
 
 static int opDisableCLS(int argc, char** argv)

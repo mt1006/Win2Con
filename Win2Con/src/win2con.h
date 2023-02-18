@@ -18,10 +18,14 @@
 #include <tlhelp32.h>
 #include <Psapi.h>
 #include <shellscalingapi.h>
+#include <gl/GL.h>
+#include <gl/GLU.h>
 
 #pragma warning(disable : 4996)
 #pragma comment(lib, "dwmapi")
 #pragma comment(lib, "Shcore")
+#pragma comment(lib, "opengl32.lib")
+#pragma comment(lib, "glu32.lib")
 
 #define W2C_OS "Windows"
 
@@ -83,6 +87,12 @@ typedef struct
 
 typedef struct
 {
+	uint8_t r, g, b;
+	uint8_t ch;
+} GlConsoleChar;
+
+typedef struct
+{
 	int argW, argH;
 	bool scaleWithRatio;
 	bool printClientArea;
@@ -97,12 +107,14 @@ typedef struct
 	ColorProcMode colorProcMode;
 	int brightnessRand;
 	bool magnifierMode;
+	bool useFakeConsole;
 	bool disableKeyboard;
 	bool disableCLS;
 	bool ignoreDPI;
 } Settings;
 
 
+//main.c
 extern HWND hwnd;
 extern HANDLE outputHandle;
 extern HWND conHWND, wtDragBarHWND;
@@ -116,6 +128,9 @@ extern bool reEnterHWND;
 extern bool ansiEnabled;
 extern int stopMainThreadVal;
 extern Settings settings;
+
+//glConsole.c
+extern float glCharW, glCharH;
 
 
 //argParser.c
@@ -147,6 +162,12 @@ extern void initConInput(void);
 //magnifierMode.c
 extern void enableMagnifierMode(void);
 extern void disableMagnifierMode(void);
+
+//glConsole.c
+extern void initOpenGlConsole(void);
+extern void refreshFont(void);
+extern void drawWithOpenGL(GlConsoleChar* output, int w, int h);
+extern void peekMessages(void);
 
 //help.c
 extern void showHelp(bool basic, bool advanced, bool modes, bool keyboard);

@@ -9,7 +9,9 @@ static const uint8_t CMD_COLORS_16[16][3] =
 	{231,72,86},{180,0,158},{249,241,165},{242,242,242}
 };
 
+static void processForCSTD(Frame* frame);
 static void processForWinAPI(Frame* frame);
+static void processForGlConsole(Frame* frame);
 static uint8_t procColor(uint8_t* r, uint8_t* g, uint8_t* b, bool withColors);
 static void procRand(uint8_t* val);
 static uint8_t findNearestColor16(uint8_t r, uint8_t g, uint8_t b);
@@ -81,9 +83,19 @@ void processFrame(Frame* frame)
 		settings.colorMode == CM_WINAPI_16)
 	{
 		processForWinAPI(frame);
-		return;
 	}
+	else if (settings.useFakeConsole)
+	{
+		processForGlConsole(frame);
+	}
+	else
+	{
+		processForCSTD(frame);
+	}
+}
 
+static void processForCSTD(Frame* frame)
+{
 	uint8_t* output = (uint8_t*)frame->output;
 	frame->outputLineOffsets[0] = 0;
 
@@ -333,6 +345,84 @@ static void processForWinAPI(Frame* frame)
 
 			output[(i * imgW) + j].Char.AsciiChar =
 				settings.charset[(val * settings.charsetSize) / 256];
+
+			if (settings.scalingMode == SM_FILL)
+			{
+				bmpJ = j * bmpW / imgW;
+			}
+			else
+			{
+				bmpJMul++;
+				if (bmpJMul == scaleXMul)
+				{
+					bmpJ += scaleXDiv;
+					bmpJMul = 0;
+				}
+			}
+		}
+
+		if (settings.scalingMode == SM_FILL)
+		{
+			bmpI = bmpH - (i * bmpH / imgH) - 1;
+		}
+		else
+		{
+			bmpIMul++;
+			if (bmpIMul == scaleYMul)
+			{
+				bmpI -= scaleYDiv;
+				bmpIMul = 0;
+			}
+		}
+	}
+}
+
+static void processForGlConsole(Frame* frame)
+{
+	GlConsoleChar* output = (GlConsoleChar*)frame->output;
+
+	int bmpW, bmpH;
+	if (settings.scalingMode == SM_SOFT_FILL)
+	{
+		bmpW = conW;
+		bmpH = conH;
+	}
+	else
+	{
+		bmpW = wndW;
+		bmpH = wndH;
+	}
+
+	int bmpI = bmpH - 1, bmpIMul = 0;
+	for (int i = 0; i < imgH; i++)
+	{
+		int bmpJ = 0, bmpJMul = 0;
+		for (int j = 0; j < imgW; j++)
+		{
+			if (j >= bmpW || i >= bmpH)
+			{
+				output[(i * imgW) + j].ch = ' ';
+				output[(i * imgW) + j].r = 0;
+				output[(i * imgW) + j].g = 0;
+				output[(i * imgW) + j].b = 0;
+				continue;
+			}
+
+			uint8_t valR = frame->bitmapArray[((bmpI * bmpW) + bmpJ) * 4 + 2];
+			uint8_t valG = frame->bitmapArray[((bmpI * bmpW) + bmpJ) * 4 + 1];
+			uint8_t valB = frame->bitmapArray[((bmpI * bmpW) + bmpJ) * 4];
+
+			uint8_t val;
+
+			if (settings.colorProcMode == CPM_NONE) { val = 255; }
+			else { val = procColor(&valR, &valG, &valB, true); }
+
+			if (settings.brightnessRand) { procRand(&val); }
+
+			output[(i * imgW) + j].ch = settings.charset[(val * settings.charsetSize) / 256];
+			output[(i * imgW) + j].r = valR;
+			output[(i * imgW) + j].g = valG;
+			output[(i * imgW) + j].b = valB;
 
 			if (settings.scalingMode == SM_FILL)
 			{

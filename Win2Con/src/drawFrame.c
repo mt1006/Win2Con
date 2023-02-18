@@ -44,31 +44,45 @@ void getConsoleInfo(void)
 	int fullConW, fullConH;
 	double fontRatio;
 
-	CONSOLE_SCREEN_BUFFER_INFOEX consoleBufferInfo;
-	consoleBufferInfo.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
-	GetConsoleScreenBufferInfoEx(outputHandle, &consoleBufferInfo);
-
-	fullConW = consoleBufferInfo.srWindow.Right - consoleBufferInfo.srWindow.Left + 1;
-	fullConH = consoleBufferInfo.srWindow.Bottom - consoleBufferInfo.srWindow.Top + 1;
-
 	RECT clientRect = { 0 };
 	GetClientRect(conHWND, &clientRect);
+	conWndW = clientRect.right;
+	conWndH = clientRect.bottom;
+
+	if (settings.useFakeConsole)
+	{
+		fullConW = (int)round((double)clientRect.right / (double)glCharW);
+		fullConH = (int)round((double)clientRect.bottom / (double)glCharH);
+		fontRatio = (double)glCharW / (double)glCharH;
+	}
+	else
+	{
+		CONSOLE_SCREEN_BUFFER_INFOEX consoleBufferInfo;
+		consoleBufferInfo.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
+		GetConsoleScreenBufferInfoEx(outputHandle, &consoleBufferInfo);
+
+		fullConW = consoleBufferInfo.srWindow.Right - consoleBufferInfo.srWindow.Left + 1;
+		fullConH = consoleBufferInfo.srWindow.Bottom - consoleBufferInfo.srWindow.Top + 1;
+	}
 
 	if (clientRect.bottom == 0 || fullConW == 0 || fullConH == 0)
 	{
-		CONSOLE_FONT_INFOEX consoleFontInfo;
-		consoleFontInfo.cbSize = sizeof(CONSOLE_FONT_INFOEX);
-		GetCurrentConsoleFontEx(outputHandle, FALSE, &consoleFontInfo);
+		if (!settings.useFakeConsole)
+		{
+			CONSOLE_FONT_INFOEX consoleFontInfo;
+			consoleFontInfo.cbSize = sizeof(CONSOLE_FONT_INFOEX);
+			GetCurrentConsoleFontEx(outputHandle, FALSE, &consoleFontInfo);
 
-		if (consoleFontInfo.dwFontSize.X == 0 ||
-			consoleFontInfo.dwFontSize.Y == 0)
-		{
-			fontRatio = DEFAULT_FONT_RATIO;
-		}
-		else
-		{
-			fontRatio = (double)consoleFontInfo.dwFontSize.X /
-				(double)consoleFontInfo.dwFontSize.Y;
+			if (consoleFontInfo.dwFontSize.X == 0 ||
+				consoleFontInfo.dwFontSize.Y == 0)
+			{
+				fontRatio = DEFAULT_FONT_RATIO;
+			}
+			else
+			{
+				fontRatio = (double)consoleFontInfo.dwFontSize.X /
+					(double)consoleFontInfo.dwFontSize.Y;
+			}
 		}
 	}
 	else
@@ -89,14 +103,11 @@ void getConsoleInfo(void)
 			if (settings.magnifierMode) { conWndY += wtDragBarRect.bottom; }
 		}
 
-		fontRatio = ((double)clientRect.right / (double)fullConW) /
-			((double)clientRect.bottom / (double)fullConH);
-	}
-
-	if (settings.magnifierMode)
-	{
-		conWndW = clientRect.right;
-		conWndH = clientRect.bottom;
+		if (!settings.useFakeConsole)
+		{
+			fontRatio = ((double)clientRect.right / (double)fullConW) /
+				((double)clientRect.bottom / (double)fullConH);
+		}
 	}
 
 	if (fullConW < 4) { fullConW = 4; }
@@ -203,6 +214,13 @@ void drawFrame(Frame* frame)
 {
 	static int scanline = 0;
 	static int lastW = 0, lastH = 0;
+
+	if (settings.useFakeConsole)
+	{
+		drawWithOpenGL((GlConsoleChar*)frame->output, imgW, imgH);
+		return;
+	}
+
 	if ((lastW != imgW || lastH != imgH) && !settings.disableCLS)
 	{
 		lastW = imgW;

@@ -22,6 +22,7 @@
     <ClCompile Include="src\argParser.c" />
     <ClCompile Include="src\getFrame.c" />
     <ClCompile Include="src\drawFrame.c" />
+    <ClCompile Include="src\glConsole.c" />
     <ClCompile Include="src\help.c" />
     <ClCompile Include="src\magnifierMode.c" />
     <ClCompile Include="src\main.c" />

@@ -134,6 +134,11 @@ size_t getOutputArraySize(void)
 	const int CSTD_256_CODE_LEN = 12; // "\x1B[38;5;???m?"
 	const int CSTD_RGB_CODE_LEN = 20; // "\x1B[38;2;???;???;???m?"
 
+	if (settings.useFakeConsole)
+	{
+		return imgW * imgH * sizeof(GlConsoleChar);
+	}
+
 	switch (settings.colorMode)
 	{
 	case CM_CSTD_GRAY:

@@ -29,6 +29,7 @@ Settings settings =
 	.colorProcMode = CPM_BOTH,
 	.brightnessRand = 0,
 	.magnifierMode = false,
+	.useFakeConsole = false,
 	.disableKeyboard = false,
 	.disableCLS = false,
 	.ignoreDPI = false
@@ -48,6 +49,7 @@ void init(void)
 	puts("Loading...");
 
 	getConsoleWindow();
+	if (settings.useFakeConsole) { initOpenGlConsole(); }
 	initGetFrame();
 	initDrawFrame();
 	initConInput();
@@ -84,9 +86,11 @@ void loop(void)
 			refreshConSize();
 			refreshBitmapSize();
 			refreshScaling();
+			if (settings.useFakeConsole) { refreshFont(); }
 			lastRefresh = curTime;
 		}
 
+		if (settings.useFakeConsole) { peekMessages(); }
 		getFrame(&frame);
 		processFrame(&frame);
 		drawFrame(&frame);
